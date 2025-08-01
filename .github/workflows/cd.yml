@@ -1,0 +1,71 @@
+name: CD
+
+# main 브랜치에 push 될 때만 실행
+on:
+  push:
+    branches: [ "deploy/cicd", "main" ]
+
+jobs:
+  # 1단계: 빌드
+  build:
+    runs-on: self-hosted  # self-hosted runner에서 실행
+    steps:
+      # 1. 레포지토리 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_ACTION_TOKEN }}
+          submodules: true  # 서브모듈 포함 체크아웃
+
+      # 2. 서브모듈 초기화
+      - name: Update submodule
+        run: git submodule update --init --recursive
+
+      # 3. JDK 21 설정
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 4. gradlew에 실행 권한 부여
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      # 5. Gradle로 빌드 (bootJar 생성)
+      - name: Build with Gradle
+        run: |
+          ./gradlew clean bootjar -Pprofile=dev
+
+      # 6. Docker 이미지 빌드 및 Docker Hub로 push
+      - name: Docker build & push
+        run: |
+          docker buildx build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }} --push .
+
+
+  # 2단계: 배포
+  deploy:
+    runs-on: self-hosted
+    needs: build  # build job이 끝난 뒤 실행됨
+    steps:
+      # 1. 레포지토리 재체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 서버에 접속하여 docker compose 재배포
+      - name: Deploy on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/actions-runner/_work/BE/BE
+            
+            echo "📄 .env 생성 중..."
+            printf "${{ secrets.ENV_FILE }}" > .env
+            
+            docker compose down
+            docker compose pull
+            docker compose up -d --build

@@ -3,8 +3,7 @@ name: CD
 # main 브랜치에 push 될 때만 실행
 on:
   push:
-    branches:
-      - main
+    branches: [ "deploy/cicd", "main" ]
 
 jobs:
   # 1단계: 빌드
@@ -64,13 +63,8 @@ jobs:
           script: |
             cd /home/ubuntu/actions-runner/_work/BE/BE
             
-            cat > .env <<EOF
-            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} 
-            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            EOF
+            echo "📄 .env 생성 중..."
+            printf "${{ secrets.ENV_FILE }}" > .env
             
             docker compose down
             docker compose pull

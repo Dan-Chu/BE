@@ -3,7 +3,7 @@ name: CD
 # main 브랜치에 push 될 때만 실행
 on:
   push:
-    branches: [ "deploy/cicd", "main" ]
+    branches: [ "main", "develop", "cicd" ]
 
 jobs:
   # 1단계: 빌드

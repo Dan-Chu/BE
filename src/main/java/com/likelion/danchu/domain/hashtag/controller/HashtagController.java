@@ -26,7 +26,16 @@ public class HashtagController {
 
   private final HashtagService hashtagService;
 
-  @Operation(summary = "해시태그 등록", description = "새로운 해시태그를 추가할 때 사용하는 API입니다.")
+  @Operation(
+      summary = "해시태그 등록",
+      description =
+          """
+        새로운 해시태그를 추가할 때 사용하는 API입니다.
+
+        - 해시태그 이름은 **'#' 없이 입력해도 자동으로 붙여집니다**.
+        - 영어는 **모두 소문자로 변환**되어 저장됩니다.
+        - 이름은 **비어 있을 수 없으며**, 최소 1자 이상, 최대 10자 이하로 입력해야 합니다.
+        """)
   @PostMapping
   public ResponseEntity<BaseResponse<HashtagResponse>> createHashtag(
       @Valid @RequestBody HashtagRequest hashtagRequest) {

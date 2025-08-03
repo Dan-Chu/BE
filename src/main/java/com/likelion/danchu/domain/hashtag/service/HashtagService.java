@@ -23,18 +23,17 @@ public class HashtagService {
   private final HashtagMapper hashtagMapper;
 
   public HashtagResponse createHashtag(HashtagRequest request) {
-    // 입력값에서 모든 공백 제거
-    String rawName = request.getName().trim().replaceAll("\\s+", "");
-    // '#' 없이 입력한 경우 자동으로 앞에 '#'을 붙임
-    String formattedName =
-        request.getName().startsWith("#") ? request.getName() : "#" + request.getName();
+    String formattedName = request.toFormattedName(); // 가공된 이름 추출
 
-    // 중복 해시태그 검사
-    if (hashtagRepository.findByName(request.getName()).isPresent()) {
+    if (hashtagRepository.findByName(formattedName).isPresent()) {
       throw new CustomException(HashtagErrorCode.HASHTAG_ALREADY_EXISTS);
     }
 
-    Hashtag hashtag = Hashtag.builder().name(request.getName()).build();
+    if (formattedName.length() < 2 || formattedName.length() > 11) {
+      throw new CustomException(HashtagErrorCode.HASHTAG_LENGTH_INVALID);
+    }
+
+    Hashtag hashtag = Hashtag.builder().name(formattedName).build();
     Hashtag savedHashtag = hashtagRepository.save(hashtag);
 
     return hashtagMapper.toResponse(savedHashtag);

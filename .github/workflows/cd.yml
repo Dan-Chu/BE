@@ -51,6 +51,16 @@ jobs:
           token: ${{ secrets.GIT_ACTION_TOKEN }}
           submodules: true
 
+      - name: Copy docker-compose.yml to Server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "~/app"
+
       - name: Deploy on server
         uses: appleboy/ssh-action@master
         with:

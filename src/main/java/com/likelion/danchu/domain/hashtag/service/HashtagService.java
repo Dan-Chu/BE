@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.hashtag.service;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
@@ -37,5 +39,10 @@ public class HashtagService {
     Hashtag savedHashtag = hashtagRepository.save(hashtag);
 
     return hashtagMapper.toResponse(savedHashtag);
+  }
+
+  public List<HashtagResponse> getAllHashtags() {
+    List<Hashtag> hashtags = hashtagRepository.findAll();
+    return hashtagMapper.toResponseList(hashtags);
   }
 }

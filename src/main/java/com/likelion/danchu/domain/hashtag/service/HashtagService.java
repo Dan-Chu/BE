@@ -1,7 +1,6 @@
 package com.likelion.danchu.domain.hashtag.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 
@@ -43,8 +42,7 @@ public class HashtagService {
   }
 
   public List<HashtagResponse> getAllHashtags() {
-    return hashtagRepository.findAll().stream()
-        .map(hashtagMapper::toResponse)
-        .collect(Collectors.toList());
+    List<Hashtag> hashtags = hashtagRepository.findAll();
+    return hashtagMapper.toResponseList(hashtags);
   }
 }

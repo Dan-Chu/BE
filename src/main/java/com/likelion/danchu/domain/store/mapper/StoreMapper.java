@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
@@ -35,5 +37,10 @@ public class StoreMapper {
         .closeTime(store.getCloseTime())
         .mainImageUrl(store.getMainImageUrl())
         .build();
+  }
+
+  // Store Entity List → StoreResponse DTO List
+  public List<StoreResponse> toResponseList(List<Store> stores) {
+    return stores.stream().map(this::toResponse).toList();
   }
 }

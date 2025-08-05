@@ -27,27 +27,27 @@ public class Store extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "name", nullable = false)
+  @Column(name = "name", nullable = false, length = 10)
   private String name;
 
-  @Column(name = "address", nullable = false)
+  @Column(name = "address", nullable = false, length = 50)
   private String address;
 
-  @Column(name = "description", nullable = false)
+  @Column(name = "description", nullable = false, length = 200)
   private String description;
 
   @Column(name = "phone_number", nullable = false)
   private String phoneNumber;
 
-  @Column(name = "opening_hour", nullable = false)
-  private String openingHour;
+  @Column(name = "open_time", nullable = false)
+  private String openTime;
+
+  @Column(name = "close_time", nullable = false)
+  private String closeTime;
 
   @Column(name = "auth_code", nullable = false)
   private String authCode;
 
   @Column(name = "main_image_url", nullable = false)
   private String mainImageUrl;
-
-  @Column(name = "menu_image_url", nullable = false)
-  private String menuImageUrl;
 }

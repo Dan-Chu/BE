@@ -36,6 +36,17 @@ services:
     networks:
       - danchu-network  # Spring과 같은 네트워크 상에 있어서 mysql이라는 호스트 이름으로 접근 가능
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - danchu-network
+
   nginx:
     image: nginx:latest
     container_name: nginx

@@ -1,5 +1,12 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.List;
+
+import jakarta.transaction.Transactional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
@@ -9,11 +16,8 @@ import com.likelion.danchu.domain.store.repository.StoreRepository;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
-import jakarta.transaction.Transactional;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor

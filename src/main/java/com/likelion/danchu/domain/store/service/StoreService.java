@@ -1,13 +1,14 @@
 package com.likelion.danchu.domain.store.service;
 
-import java.util.List;
-
 import jakarta.transaction.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
+import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.exception.StoreErrorCode;
@@ -61,9 +62,12 @@ public class StoreService {
     return storeMapper.toResponse(saved);
   }
 
-  // 전체 가게 조회
-  public List<StoreResponse> getAllStores() {
-    List<Store> storeList = storeRepository.findAll();
-    return storeMapper.toResponseList(storeList);
+  // 전체 가게 페이징 조회
+  public PageableResponse<StoreResponse> getPaginatedStores(int page, int size) {
+    PageRequest pageRequest = PageRequest.of(page, size); // 페이지당 3개
+    Page<Store> storePage = storeRepository.findAll(pageRequest);
+    Page<StoreResponse> storeResponsePage = storePage.map(storeMapper::toResponse);
+
+    return PageableResponse.from(storeResponsePage);
   }
 }

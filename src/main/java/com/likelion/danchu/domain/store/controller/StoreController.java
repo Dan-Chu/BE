@@ -1,10 +1,13 @@
 package com.likelion.danchu.domain.store.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -68,5 +71,12 @@ public class StoreController {
     StoreResponse storeResponse = storeService.createStore(storeRequest, imageFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.success("가게 생성에 성공했습니다.", storeResponse));
+  }
+
+  @Operation(summary = "전체 가게 조회", description = "등록된 모든 가게 정보를 조회합니다.")
+  @GetMapping
+  public ResponseEntity<BaseResponse<List<StoreResponse>>> getAllStores() {
+    List<StoreResponse> storeResponses = storeService.getAllStores();
+    return ResponseEntity.ok(BaseResponse.success("전체 가게 조회에 성공했습니다.", storeResponses));
   }
 }

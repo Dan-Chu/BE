@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
@@ -57,5 +59,11 @@ public class StoreService {
     }
 
     return storeMapper.toResponse(saved);
+  }
+
+  // 전체 가게 조회
+  public List<StoreResponse> getAllStores() {
+    List<Store> storeList = storeRepository.findAll();
+    return storeMapper.toResponseList(storeList);
   }
 }

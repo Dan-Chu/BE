@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 import com.likelion.danchu.domain.user.entity.User;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {}
+public interface UserRepository extends JpaRepository<User, Long> {
+  Boolean existsByEmail(String email);
+
+  Boolean existsByNickname(String nickname);
+}

@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.likelion.danchu.global.common.BaseTimeEntity;
 
 import lombok.AccessLevel;
@@ -33,9 +34,13 @@ public class User extends BaseTimeEntity {
   @Column(name = "email", nullable = false, unique = true)
   private String email;
 
+  @JsonIgnore
+  @Column(name = "password", nullable = false)
+  private String password;
+
   @Builder.Default
   @Column(name = "completed_mission", nullable = false)
-  private int completedMission = 0;
+  private long completedMission = 0;
 
   @Column(name = "profile_image_url", nullable = true)
   private String profileImageUrl;

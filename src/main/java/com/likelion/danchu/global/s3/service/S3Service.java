@@ -1,6 +1,7 @@
 package com.likelion.danchu.global.s3.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +37,9 @@ public class S3Service {
   /** MultipartFile을 지정한 PathName에 따라 S3에 업로드하고 keyName을 반환합니다. */
   public String uploadFile(PathName pathName, MultipartFile file) {
     validateFile(file);
-    String keyName = getPrefix(pathName) + "/" + UUID.randomUUID();
+
+    String ext = getFileExtension(file.getOriginalFilename());
+    String keyName = getPrefix(pathName) + "/" + UUID.randomUUID() + ext;
 
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentLength(file.getSize());
@@ -48,7 +51,7 @@ public class S3Service {
       return keyName;
     } catch (AmazonS3Exception e) {
       throw new CustomException(S3ErrorCode.S3_CONNECTION_FAILED);
-    } catch (java.io.IOException e) {
+    } catch (IOException e) {
       throw new CustomException(S3ErrorCode.IO_EXCEPTION);
     }
   }
@@ -69,7 +72,15 @@ public class S3Service {
     }
 
     byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
-    String keyName = getPrefix(pathName) + "/" + UUID.randomUUID();
+
+    String ext =
+        switch (contentType) {
+          case "image/jpeg" -> ".jpg";
+          case "image/png" -> ".png";
+          case "image/webp" -> ".webp";
+          default -> throw new CustomException(S3ErrorCode.FILE_TYPE_INVALID);
+        };
+    String keyName = getPrefix(pathName) + "/" + UUID.randomUUID() + ext;
 
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentLength(decodedBytes.length);
@@ -81,7 +92,7 @@ public class S3Service {
       return amazonS3.getUrl(s3Config.getBucket(), keyName).toString();
     } catch (AmazonS3Exception e) {
       throw new CustomException(S3ErrorCode.S3_CONNECTION_FAILED);
-    } catch (java.io.IOException e) {
+    } catch (IOException e) {
       throw new CustomException(S3ErrorCode.IO_EXCEPTION);
     }
   }
@@ -176,5 +187,13 @@ public class S3Service {
       case REWARD -> s3Config.getRewardFolder();
       case MENU -> s3Config.getMenuFolder();
     };
+  }
+
+  /* 확장자 추출 */
+  private String getFileExtension(String originalName) {
+    if (originalName == null || !originalName.contains(".")) {
+      throw new CustomException(S3ErrorCode.FILE_TYPE_INVALID);
+    }
+    return originalName.substring(originalName.lastIndexOf('.')).toLowerCase();
   }
 }

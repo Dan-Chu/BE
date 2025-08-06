@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -104,5 +105,13 @@ public class StoreController {
       @RequestParam("keyword") String keyword) {
     List<StoreResponse> storeResponses = storeService.searchStoresByKeyword(keyword);
     return ResponseEntity.ok(BaseResponse.success("가게 검색에 성공했습니다.", storeResponses));
+  }
+
+  @Operation(summary = "가게 상세 조회", description = "storeId를 기반으로 특정 가게의 상세 정보를 조회합니다.")
+  @GetMapping("/{storeId}")
+  public ResponseEntity<BaseResponse<StoreResponse>> getStoreDetail(
+      @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId) {
+    StoreResponse storeResponse = storeService.getStoreDetail(storeId);
+    return ResponseEntity.ok(BaseResponse.success("가게 상세 조회에 성공했습니다.", storeResponse));
   }
 }

@@ -81,4 +81,13 @@ public class StoreService {
     List<Store> stores = storeRepository.findByNameContainingIgnoreCase(keyword);
     return storeMapper.toResponseList(stores);
   }
+
+  // 가게 상세 조회
+  public StoreResponse getStoreDetail(Long storeId) {
+    Store store =
+        storeRepository
+            .findById(storeId)
+            .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+    return storeMapper.toResponse(store);
+  }
 }

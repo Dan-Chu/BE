@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -92,5 +94,15 @@ public class StoreController {
 
     PageableResponse<StoreResponse> storeResponses = storeService.getPaginatedStores(page, size);
     return ResponseEntity.ok(BaseResponse.success("가게 페이징 조회에 성공했습니다.", storeResponses));
+  }
+
+  @Operation(
+      summary = "가게 이름 검색",
+      description = "검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.")
+  @GetMapping("/search")
+  public ResponseEntity<BaseResponse<List<StoreResponse>>> searchStoresByKeyword(
+      @RequestParam("keyword") String keyword) {
+    List<StoreResponse> storeResponses = storeService.searchStoresByKeyword(keyword);
+    return ResponseEntity.ok(BaseResponse.success("가게 검색에 성공했습니다.", storeResponses));
   }
 }

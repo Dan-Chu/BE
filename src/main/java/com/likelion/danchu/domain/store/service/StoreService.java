@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
@@ -69,5 +71,14 @@ public class StoreService {
     Page<StoreResponse> storeResponsePage = storePage.map(storeMapper::toResponse);
 
     return PageableResponse.from(storeResponsePage);
+  }
+
+  // 가게 이름 검색
+  public List<StoreResponse> searchStoresByKeyword(String keyword) {
+    if (keyword == null || keyword.trim().isEmpty()) {
+      throw new CustomException(StoreErrorCode.EMPTY_KEYWORD);
+    }
+    List<Store> stores = storeRepository.findByNameContainingIgnoreCase(keyword);
+    return storeMapper.toResponseList(stores);
   }
 }

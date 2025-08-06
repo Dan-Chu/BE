@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +15,7 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
 
   // 인증번호 중복 확인
   boolean existsByAuthCode(String authCode);
+
+  // 가게 이름 검색
+  List<Store> findByNameContainingIgnoreCase(String keyword);
 }

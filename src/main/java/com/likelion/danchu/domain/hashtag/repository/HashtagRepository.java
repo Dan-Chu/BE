@@ -1,5 +1,6 @@
 package com.likelion.danchu.domain.hashtag.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,5 +10,8 @@ import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 
 @Repository
 public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
+
   Optional<Hashtag> findByName(String name);
+
+  List<Hashtag> findByNameIn(List<String> names);
 }

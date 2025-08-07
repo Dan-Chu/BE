@@ -1,20 +1,32 @@
 package com.likelion.danchu.global.security;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import lombok.RequiredArgsConstructor;
+import com.likelion.danchu.domain.auth.exception.AuthErrorCode;
+import com.likelion.danchu.global.exception.CustomException;
 
 @Component
-@RequiredArgsConstructor
 public class SecurityUtil {
 
-  private static final Long TEST_USER_ID = 1L;
-
   public static Long getCurrentUserId() {
-    return TEST_USER_ID;
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new CustomException(AuthErrorCode.INVALID_AUTH_CONTEXT);
+    }
+
+    Object principal = authentication.getPrincipal();
+    if (!(principal instanceof CustomUserDetails userDetails)) {
+      throw new CustomException(AuthErrorCode.AUTHENTICATION_NOT_FOUND);
+    }
+
+    return userDetails.getUserId();
   }
 
-  public static boolean isTestUser() {
-    return true;
+  public static boolean isAuthenticated() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null && authentication.isAuthenticated();
   }
 }

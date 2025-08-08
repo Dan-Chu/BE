@@ -31,13 +31,18 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 <li><strong>마이페이지</strong>에서 쿠폰함, 관심 해시태그, 프로필 정보 등을 편리하게 관리할 수 있습니다.</li>
                 <li><strong>운영 서버와 로컬 환경</strong> 모두에서 Swagger UI를 통해 직접 API 테스트가 가능합니다.</li>
             </ul>
-            <p>본 문서를 통해 단추 API를 쉽게 테스트하고 연동할 수 있습니다.</p>
+            <p><strong>⚠️ 테스트 방법 안내</strong></p>
+            <ul>
+                <li><strong>테스트 로그인 API</strong>를 통해 JWT를 발급받을 수 있습니다.</li>
+                <li>발급된 JWT를 상단의 <strong>"Authorize"</strong> 버튼을 눌러 입력해야 인증이 필요한 API를 사용할 수 있습니다.</li>
+                <li>JWT 토큰은 <strong>접두사 없이</strong> 토큰 값만 입력하면 Swagger가 자동으로 <strong>Bearer</strong>를 붙여줍니다.</li>
+            </ul>
             """,
             contact =
                 @Contact(name = "단추", url = "https://danchu.site", email = "1030n@naver.com")),
-    security = @SecurityRequirement(name = "Authorization"), // ✅ Authorization globally 적용
+    security = @SecurityRequirement(name = "Authorization"),
     servers = {
-      @Server(url = "https://api.danchu.site", description = "🚀 운영 서버"), // ✅ 운영 서버 우선
+      @Server(url = "https://api.danchu.site", description = "🚀 운영 서버"),
       @Server(url = "http://localhost:8080", description = "🛠️ 로컬 서버")
     })
 @SecurityScheme(

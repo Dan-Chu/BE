@@ -10,16 +10,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.exception.StoreErrorCode;
+import com.likelion.danchu.domain.store.service.StoreHashtagService;
 import com.likelion.danchu.domain.store.service.StoreService;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.response.BaseResponse;
@@ -37,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class StoreController {
 
   private final StoreService storeService;
+  private final StoreHashtagService storeHashtagService;
 
   @Operation(
       summary = "가게 등록",
@@ -113,5 +118,27 @@ public class StoreController {
       @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId) {
     StoreResponse storeResponse = storeService.getStoreDetail(storeId);
     return ResponseEntity.ok(BaseResponse.success("가게 상세 조회에 성공했습니다.", storeResponse));
+  }
+
+  @Operation(
+      summary = "특정 가게 해시태그 등록",
+      description =
+          """
+              특정 가게에 해시태그를 등록합니다.
+
+              - 해시태그 이름은 **'#' 없이 입력해도 자동으로 붙여집니다**.
+              - 영어는 **모두 소문자로 변환**되어 저장됩니다.
+              - 이름은 **비어 있을 수 없으며**, 최소 1자 이상, 최대 10자 이하로 입력해야 합니다.
+              """)
+  @PostMapping("/{storeId}/hashtags")
+  public ResponseEntity<BaseResponse<HashtagResponse>> createHashtagForStore(
+      @Parameter(name = "storeId", description = "가게 ID", example = "1", required = true)
+          @PathVariable
+          Long storeId,
+      @Valid @RequestBody HashtagRequest hashtagRequest) {
+    HashtagResponse hashtagResponse =
+        storeHashtagService.createHashtagForStore(storeId, hashtagRequest);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(BaseResponse.success("해시태그 생성에 성공했습니다.", hashtagResponse));
   }
 }

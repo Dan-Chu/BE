@@ -1,6 +1,7 @@
 package com.likelion.danchu.domain.auth.service;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
@@ -67,6 +68,34 @@ public class AuthService {
     return issueTokensAndSetResponse(user, response);
   }
 
+  /**
+   * 로그아웃 처리 메서드
+   *
+   * <p>요청 헤더에서 액세스 토큰을 추출하여 Redis 블랙리스트에 저장하고, 리프레시 토큰을 Redis에서 삭제하여 재사용을 차단합니다.
+   *
+   * @param request HTTP 요청 객체 (헤더에서 Access Token 추출용)
+   * @param response HTTP 응답 객체 (리프레시 쿠키 삭제용)
+   * @throws CustomException 액세스 토큰이 유효하지 않거나 없을 경우 {@link AuthErrorCode#INVALID_ACCESS_TOKEN}
+   */
+  public void logout(HttpServletRequest request, HttpServletResponse response) {
+    String accessToken = resolveAccessToken(request);
+    if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
+      throw new CustomException(AuthErrorCode.INVALID_ACCESS_TOKEN);
+    }
+
+    // 블랙리스트 등록 (accessToken → "logout" 값, 만료시간까지)
+    long expiration =
+        jwtProvider.extractExpiration(accessToken).getTime() - System.currentTimeMillis();
+    redisUtil.setData("blacklist:" + accessToken, "logout", expiration / 1000);
+
+    // refresh 토큰 Redis에서 삭제
+    Long userId = jwtProvider.extractUserId(accessToken);
+    redisUtil.deleteData("user:refresh:" + userId);
+
+    // 쿠키에서 refreshToken 제거
+    deleteRefreshTokenCookie(response);
+  }
+
   // 사용자 인증 (이메일 + 비밀번호 검증)
   private User validateUserCredentials(UserRequest.LoginRequest loginRequest) {
     User user =
@@ -107,6 +136,23 @@ public class AuthService {
     cookie.setSecure(secure);
     cookie.setPath("/");
     cookie.setMaxAge((int) maxAgeSeconds);
+    response.addCookie(cookie);
+  }
+
+  private String resolveAccessToken(HttpServletRequest request) {
+    String bearer = request.getHeader("Authorization");
+    if (bearer != null && bearer.startsWith("Bearer ")) {
+      return bearer.substring(7);
+    }
+    return null;
+  }
+
+  private void deleteRefreshTokenCookie(HttpServletResponse response) {
+    Cookie cookie = new Cookie("refreshToken", null);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(secure);
+    cookie.setPath("/");
+    cookie.setMaxAge(0); // 쿠키 즉시 삭제
     response.addCookie(cookie);
   }
 }

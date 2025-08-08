@@ -3,14 +3,17 @@ package com.likelion.danchu.global.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.likelion.danchu.global.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,37 +23,27 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
   private final CorsConfig corsConfig;
-
-  // private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        // CSRF 보호 기능 비활성화 (REST API에서는 필요없음)
-        .csrf(AbstractHttpConfigurer::disable)
-        // CORS 설정 활성화(보통은 CORS 설정 활성화 하지 않음. 서버에서 NginX로 CORS 검증)
+    http.csrf(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
-        // HTTP Basic 인증 기본 설정
-        .httpBasic(Customizer.withDefaults())
-        // 세션을 생성하지 않음 (JWT 사용으로 인한 Stateless 설정)
-        // .sessionManagement(
-        // session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        // HTTP 요청에 대한 권한 설정
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            request ->
-                request
-                    // Swagger 경로 인증 필요
+            auth ->
+                auth.requestMatchers(
+                        "/api/users/register", "/api/auth/login/**", "/api/auth/refresh")
+                    .permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
-                    // 인증 없이 허용할 경로
-                    .requestMatchers("/api/**")
-                    .permitAll()
-                    // 그 외 모든 요청은 모두 인증 필요
                     .anyRequest()
-                    .permitAll() // 모든 요청 허용
-            );
-    // .authenticated())
-    // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                    .authenticated())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
     return http.build();
   }
 

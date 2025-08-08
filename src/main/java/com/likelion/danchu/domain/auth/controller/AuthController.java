@@ -1,0 +1,62 @@
+package com.likelion.danchu.domain.auth.controller;
+
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.likelion.danchu.domain.auth.service.AuthService;
+import com.likelion.danchu.domain.user.dto.request.UserRequest;
+import com.likelion.danchu.domain.user.dto.response.UserResponse;
+import com.likelion.danchu.global.response.BaseResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Auth 관련 API")
+public class AuthController {
+
+  private final AuthService authService;
+
+  @Operation(
+      summary = "로그인",
+      description =
+          """
+          이메일과 비밀번호를 통해 로그인을 수행합니다.
+
+          - 성공 시: 액세스 토큰은 헤더(**Authorization**)로, 리프레시 토큰은 **HttpOnly 쿠키**로 전달됩니다.
+          - 응답 바디에는 로그인한 사용자의 기본 정보가 포함됩니다.
+          """)
+  @PostMapping("/login")
+  public ResponseEntity<BaseResponse<UserResponse>> login(
+      @Valid @RequestBody UserRequest.LoginRequest loginRequest, HttpServletResponse response) {
+
+    // 서비스에서 로그인 처리 및 토큰 전달
+    UserResponse userResponse = authService.login(loginRequest, response);
+
+    return ResponseEntity.ok(BaseResponse.success("로그인 성공", userResponse));
+  }
+
+  @Operation(
+      summary = "테스트 계정 로그인",
+      description =
+          """
+          테스트용 계정으로 로그인을 수행합니다.
+          - 무조건 ID가 1인 계정으로 로그인됩니다.
+          - **테스트 계정으로 로그인** 시 사용 가능합니다.
+          - 토큰 발급 및 응답 구조는 일반 로그인과 동일합니다.
+          """)
+  @PostMapping("/login/test")
+  public ResponseEntity<BaseResponse<UserResponse>> testLogin(HttpServletResponse response) {
+    UserResponse userResponse = authService.testLogin(response);
+    return ResponseEntity.ok(BaseResponse.success("테스트 로그인 성공", userResponse));
+  }
+}

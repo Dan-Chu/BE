@@ -1,16 +1,28 @@
 package com.likelion.danchu.domain.user.service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
+import com.likelion.danchu.domain.hashtag.entity.Hashtag;
+import com.likelion.danchu.domain.hashtag.exception.HashtagErrorCode;
+import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
+import com.likelion.danchu.domain.user.dto.request.UserRequest;
 import com.likelion.danchu.domain.user.dto.request.UserRequest.InfoRequest;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
 import com.likelion.danchu.domain.user.entity.User;
+import com.likelion.danchu.domain.user.entity.UserHashtag;
 import com.likelion.danchu.domain.user.exception.UserErrorCode;
 import com.likelion.danchu.domain.user.mapper.UserMapper;
+import com.likelion.danchu.domain.user.repository.UserHashtagRepository;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.redis.RedisUtil;
@@ -31,6 +43,8 @@ public class UserService {
   private final S3Service s3Service;
   private final UserMapper userMapper;
   private final UserRepository userRepository;
+  private final HashtagRepository hashtagRepository;
+  private final UserHashtagRepository userHashtagRepository;
   private final RedisUtil redisUtil;
 
   /**
@@ -80,7 +94,7 @@ public class UserService {
     String redisKey = "user:completedMission:" + user.getId();
     redisUtil.setData(redisKey, "0");
 
-    return userMapper.toResponse(user, getCompletedMission(user.getId()));
+    return userMapper.toResponse(user, getCompletedMission(user.getId()), null);
   }
 
   /**
@@ -95,6 +109,122 @@ public class UserService {
 
     Long userId = securityUtil.getCurrentUserId();
     return getCompletedMission(userId);
+  }
+
+  /**
+   * 회원 정보를 수정하는 메서드
+   *
+   * @param request 닉네임, 이메일, 관심 해시태그가 포함된 사용자 수정 요청 DTO
+   * @param imageFile 새로운 프로필 이미지 파일 (nullable, 비어있을 수 있음)
+   * @return 수정된 사용자 정보를 담은 {@link UserResponse} 객체
+   * @throws CustomException 사용자 조회 실패 시 {@link UserErrorCode#USER_NOT_FOUND}
+   * @throws CustomException 닉네임 또는 이메일 중복 시 {@link UserErrorCode#DUPLICATE_NICKNAME}, {@link
+   *     UserErrorCode#DUPLICATE_EMAIL}
+   * @throws CustomException 이미지 업로드 실패 시 {@link UserErrorCode#IMAGE_UPLOAD_FAILED}
+   * @throws CustomException 사용자 저장 실패 시 {@link UserErrorCode#USER_SAVE_FAILED}
+   */
+  public UserResponse updateUser(UserRequest.UpdateRequest request, MultipartFile imageFile) {
+    Long userId = securityUtil.getCurrentUserId();
+
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    String nickname = request.getNickname();
+    if (!user.getNickname().equals(nickname) && userRepository.existsByNickname(nickname)) {
+      throw new CustomException(UserErrorCode.DUPLICATE_NICKNAME);
+    }
+
+    String email = request.getEmail();
+    if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+      throw new CustomException(UserErrorCode.DUPLICATE_EMAIL);
+    }
+
+    // 프로필 이미지 업로드
+    String imageUrl = user.getProfileImageUrl();
+    if (imageFile != null && !imageFile.isEmpty()) {
+      try {
+        imageUrl = s3Service.uploadImage(PathName.USER, imageFile).getImageUrl();
+      } catch (Exception e) {
+        throw new CustomException(UserErrorCode.IMAGE_UPLOAD_FAILED);
+      }
+    }
+
+    // 사용자 정보 수정
+    user.updateInfo(nickname, email, imageUrl);
+
+    // 관심 해시태그 수정
+    updateUserHashtags(user, request.getHashtags());
+
+    List<Hashtag> hashtags = getUserHashtags(user);
+    return userMapper.toResponse(user, getCompletedMission(userId), hashtags);
+  }
+
+  private void updateUserHashtags(User user, List<HashtagRequest> newRequests) {
+    if (user == null) {
+      throw new CustomException(UserErrorCode.USER_NOT_FOUND);
+    }
+
+    // 기존 유저 해시태그 조회
+    List<UserHashtag> currentUserHashtags;
+    try {
+      currentUserHashtags = userHashtagRepository.findAllByUser(user);
+    } catch (Exception e) {
+      throw new CustomException(UserErrorCode.USER_SAVE_FAILED);
+    }
+
+    Set<String> currentHashtagNames =
+        currentUserHashtags.stream()
+            .map(uh -> uh.getHashtag().getName())
+            .collect(Collectors.toSet());
+
+    // 새로운 해시태그 정리 (중복 제거 + 포맷팅)
+    Set<String> newFormattedNames =
+        newRequests == null
+            ? Set.of()
+            : newRequests.stream().map(HashtagRequest::toFormattedName).collect(Collectors.toSet());
+
+    // 삭제할 항목 = 현재 DB에 있는데 요청에는 없는 것
+    Set<String> hashtagsToDelete = new HashSet<>(currentHashtagNames);
+    hashtagsToDelete.removeAll(newFormattedNames);
+
+    // 추가할 항목 = 요청에는 있는데 현재 DB에 없는 것
+    Set<String> hashtagsToAdd = new HashSet<>(newFormattedNames);
+    hashtagsToAdd.removeAll(currentHashtagNames);
+
+    // 삭제 처리
+    List<UserHashtag> toDelete =
+        currentUserHashtags.stream()
+            .filter(uh -> hashtagsToDelete.contains(uh.getHashtag().getName()))
+            .toList();
+
+    try {
+      userHashtagRepository.deleteAll(toDelete);
+    } catch (Exception e) {
+      throw new CustomException(UserErrorCode.USER_SAVE_FAILED);
+    }
+
+    for (String name : hashtagsToAdd) {
+      if (name.length() < 2 || name.length() > 11) {
+        throw new CustomException(HashtagErrorCode.HASHTAG_LENGTH_INVALID);
+      }
+
+      Hashtag hashtag =
+          hashtagRepository
+              .findByName(name)
+              .orElseThrow(() -> new CustomException(HashtagErrorCode.HASHTAG_NOT_FOUND));
+
+      try {
+        userHashtagRepository.save(UserHashtag.builder().user(user).hashtag(hashtag).build());
+      } catch (Exception e) {
+        throw new CustomException(UserErrorCode.USER_SAVE_FAILED);
+      }
+    }
+  }
+
+  public List<Hashtag> getUserHashtags(User user) {
+    return userHashtagRepository.findAllByUser(user).stream().map(UserHashtag::getHashtag).toList();
   }
 
   // Lazy Loading: Redis에 없으면 → DB에서 조회하고 → Redis에 저장

@@ -1,7 +1,11 @@
 package com.likelion.danchu.domain.user.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
 import com.likelion.danchu.domain.user.entity.User;
 
@@ -27,18 +31,26 @@ public class UserMapper {
   }
 
   /**
-   * 회원 정보를 API 응답용 DTO로 변환
+   * 회원 정보를 응답 DTO로 변환하는 메서드
    *
-   * @param user 저장된 회원 엔티티
-   * @return {@link UserResponse}
+   * @param user 회원 엔티티
+   * @param completedMission 완료한 미션 개수
+   * @param hashtags 관심 해시태그 목록 (nullable 허용)
+   * @return {@link UserResponse} 응답 객체
    */
-  public UserResponse toResponse(User user, long completedMission) {
+  public UserResponse toResponse(User user, long completedMission, List<Hashtag> hashtags) {
+    List<HashtagResponse> hashtagResponses =
+        hashtags == null
+            ? List.of()
+            : hashtags.stream().map(h -> new HashtagResponse(h.getId(), h.getName())).toList();
+
     return UserResponse.builder()
         .id(user.getId())
         .nickname(user.getNickname())
         .email(user.getEmail())
         .completedMission(completedMission)
         .profileImageUrl(user.getProfileImageUrl())
+        .hashtags(hashtagResponses)
         .build();
   }
 }

@@ -77,8 +77,9 @@ public class AuthController {
 
     authService.reissueAccessToken(request, response);
     return ResponseEntity.ok(BaseResponse.success("AccessToken 재발급 성공"));
+  }
 
-   @Operation(
+  @Operation(
       summary = "로그아웃",
       description =
           """

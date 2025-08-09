@@ -161,6 +161,31 @@ public class UserService {
     return userMapper.toResponse(user, getCompletedMission(userId), hashtags);
   }
 
+  /**
+   * 현재 로그인한 사용자의 정보를 조회하는 메서드
+   *
+   * @return 로그인한 사용자의 정보를 담은 {@link UserResponse} 객체
+   * @throws CustomException 사용자 조회 실패 시 {@link UserErrorCode#USER_NOT_FOUND}
+   */
+  public UserResponse getUserInfo() {
+    Long userId = SecurityUtil.getCurrentUserId();
+
+    // 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    // 관심 해시태그 조회
+    List<Hashtag> hashtags = getUserHashtags(user);
+
+    // 완료 미션 개수 조회
+    long completedMission = getCompletedMission(userId);
+
+    // DTO 변환
+    return userMapper.toResponse(user, completedMission, hashtags);
+  }
+
   private void updateUserHashtags(User user, List<HashtagRequest> newRequests) {
     if (user == null) {
       throw new CustomException(UserErrorCode.USER_NOT_FOUND);

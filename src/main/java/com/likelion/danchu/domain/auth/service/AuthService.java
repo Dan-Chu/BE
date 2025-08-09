@@ -98,7 +98,7 @@ public class AuthService {
     // 쿠키에서 refreshToken 제거
     deleteRefreshTokenCookie(response);
   }
-  
+
   /**
    * 액세스 토큰 재발급 처리 메서드
    *
@@ -185,7 +185,7 @@ public class AuthService {
     }
     return null;
   }
-  
+
   private String resolveAccessToken(HttpServletRequest request) {
     String bearer = request.getHeader("Authorization");
     if (bearer != null && bearer.startsWith("Bearer ")) {
@@ -199,7 +199,7 @@ public class AuthService {
     cookie.setHttpOnly(true);
     cookie.setSecure(secure);
     cookie.setPath("/");
-    cookie.setMaxAge(0); 
+    cookie.setMaxAge(0);
     response.addCookie(cookie);
   }
 }

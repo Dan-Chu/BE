@@ -106,4 +106,23 @@ public class UserController {
     UserResponse response = userService.updateUser(request, imageFile);
     return ResponseEntity.ok(BaseResponse.success("회원 정보 수정 성공", response));
   }
+
+  @Operation(
+      summary = "회원 정보 조회",
+      description =
+          """
+          현재 로그인한 사용자의 프로필 정보를 조회합니다.
+
+          - 반환 항목:
+            - 사용자 기본 정보: **id, nickname, email**
+            - 완료 미션 개수: **completedMission**
+            - 프로필 이미지: **profileImageUrl** (null 가능)
+            - 관심 해시태그: **hashtags 목록** (없으면 빈 배열)
+          """)
+  @GetMapping("")
+  public ResponseEntity<BaseResponse<UserResponse>> getUserInfo() {
+
+    UserResponse response = userService.getUserInfo();
+    return ResponseEntity.ok(BaseResponse.success("회원 정보 조회 성공", response));
+  }
 }

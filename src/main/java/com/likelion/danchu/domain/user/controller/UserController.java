@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,5 +81,29 @@ public class UserController {
   public ResponseEntity<BaseResponse<Long>> getCompletedMissionCount() {
     long count = userService.getCompletedMissionCountForCurrentUser();
     return ResponseEntity.ok(BaseResponse.success("완료 미션 개수를 조회했습니다.", count));
+  }
+
+  @Operation(
+      summary = "회원 정보 수정",
+      description =
+          """
+          회원의 정보를 수정합니다.
+          (닉네임, 이메일, 프로필 이미지, 관심 해시태그 포함)
+
+          - 닉네임: **2자 이상, 20자 이내**
+          - 이메일: **이메일 형식 필수 (예: danchu@skuniv.ac.kr)**
+          - 관심 해시태그 목록: **해시태그 목록에 있는 문자열 리스트 (예: '매운맛', '단짠단짠')**
+          - 프로필 이미지: **multipart/form-data** 형식의 파일 (null: 기존 이미지 유지)
+          - 이메일/닉네임 중복 시 에러가 발생합니다.
+          """)
+  @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<BaseResponse<UserResponse>> updateUserInfo(
+      @RequestPart("userRequest") @Valid UserRequest.UpdateRequest request,
+      @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+          @RequestPart(value = "imageFile", required = false)
+          MultipartFile imageFile) {
+
+    UserResponse response = userService.updateUser(request, imageFile);
+    return ResponseEntity.ok(BaseResponse.success("회원 정보 수정 성공", response));
   }
 }

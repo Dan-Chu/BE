@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.auth.service;
 
+import java.util.List;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -9,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.likelion.danchu.domain.auth.exception.AuthErrorCode;
+import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 import com.likelion.danchu.domain.user.dto.request.UserRequest;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
 import com.likelion.danchu.domain.user.entity.User;
@@ -93,7 +96,9 @@ public class AuthService {
     setRefreshTokenCookie(response, refreshToken, refreshTokenExpireSeconds);
 
     long completedMission = userService.getCompletedMission(user.getId());
-    return userMapper.toResponse(user, completedMission);
+    List<Hashtag> hashtags = userService.getUserHashtags(user);
+
+    return userMapper.toResponse(user, completedMission, hashtags);
   }
 
   private void setAccessTokenHeader(HttpServletResponse response, String accessToken) {

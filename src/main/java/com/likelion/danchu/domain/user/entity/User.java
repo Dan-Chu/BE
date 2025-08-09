@@ -48,4 +48,10 @@ public class User extends BaseTimeEntity {
   public void increaseCompletedMission() {
     this.completedMission++;
   }
+
+  public void updateInfo(String nickname, String email, String imageUrl) {
+    this.nickname = nickname;
+    this.email = email;
+    this.profileImageUrl = imageUrl;
+  }
 }

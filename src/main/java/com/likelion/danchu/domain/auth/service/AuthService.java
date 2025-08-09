@@ -99,6 +99,37 @@ public class AuthService {
     deleteRefreshTokenCookie(response);
   }
 
+  /**
+   * 액세스 토큰 재발급 처리 메서드
+   *
+   * <p>쿠키에서 리프레시 토큰을 추출한 후 Redis에 저장된 토큰과 비교하여 유효성을 검증합니다. 검증에 성공하면 새로운 액세스 토큰을 생성하여 응답 헤더에 포함시킵니다.
+   *
+   * @param request HTTP 요청 객체 (쿠키에서 리프레시 토큰 추출용)
+   * @param response HTTP 응답 객체 (새로운 액세스 토큰 설정용)
+   * @throws CustomException 리프레시 토큰이 없거나 유효하지 않거나, 저장된 토큰과 일치하지 않는 경우 {@link
+   *     AuthErrorCode#REFRESH_TOKEN_REQUIRED}
+   */
+  public void reissueAccessToken(HttpServletRequest request, HttpServletResponse response) {
+    // 1. 쿠키에서 refreshToken 추출
+    String refreshToken = extractRefreshTokenFromCookie(request);
+    if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
+      throw new CustomException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
+    }
+
+    // 2. 사용자 ID 추출
+    Long userId = jwtProvider.extractUserId(refreshToken);
+
+    // 3. Redis에 저장된 리프레시 토큰과 비교
+    String storedToken = redisUtil.getData("user:refresh:" + userId);
+    if (!refreshToken.equals(storedToken)) {
+      throw new CustomException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
+    }
+
+    // 4. 새로운 accessToken 생성 후 응답 헤더에 설정
+    String newAccessToken = jwtProvider.createAccessToken(userId);
+    response.setHeader("Authorization", "Bearer " + newAccessToken);
+  }
+
   // 사용자 인증 (이메일 + 비밀번호 검증)
   private User validateUserCredentials(UserRequest.LoginRequest loginRequest) {
     User user =
@@ -144,6 +175,17 @@ public class AuthService {
     response.addCookie(cookie);
   }
 
+  private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+    if (request.getCookies() == null) return null;
+
+    for (Cookie cookie : request.getCookies()) {
+      if ("refreshToken".equals(cookie.getName())) {
+        return cookie.getValue();
+      }
+    }
+    return null;
+  }
+
   private String resolveAccessToken(HttpServletRequest request) {
     String bearer = request.getHeader("Authorization");
     if (bearer != null && bearer.startsWith("Bearer ")) {
@@ -157,7 +199,7 @@ public class AuthService {
     cookie.setHttpOnly(true);
     cookie.setSecure(secure);
     cookie.setPath("/");
-    cookie.setMaxAge(0); // 쿠키 즉시 삭제
+    cookie.setMaxAge(0);
     response.addCookie(cookie);
   }
 }

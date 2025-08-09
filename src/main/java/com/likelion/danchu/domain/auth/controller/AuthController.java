@@ -62,6 +62,24 @@ public class AuthController {
   }
 
   @Operation(
+      summary = "액세스 토큰 재발급",
+      description =
+          """
+          저장된 리프레시 토큰을 기반으로 새로운 액세스 토큰을 재발급합니다.
+          - 요청 시 **쿠키에 저장된 refreshToken**을 사용합니다.
+          - Redis에 저장된 토큰과 일치하는 경우에만 재발급이 성공합니다.
+          - 응답 헤더의 Authorization 값으로 새로운 액세스 토큰이 전달됩니다.
+          - 본 API는 **로그인 후 액세스 토큰이 만료된 경우에 사용**합니다.
+          """)
+  @PostMapping("/refresh")
+  public ResponseEntity<BaseResponse<String>> reissueAccessToken(
+      HttpServletRequest request, HttpServletResponse response) {
+
+    authService.reissueAccessToken(request, response);
+    return ResponseEntity.ok(BaseResponse.success("AccessToken 재발급 성공"));
+  }
+
+  @Operation(
       summary = "로그아웃",
       description =
           """

@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.store.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +14,7 @@ public interface StoreHashtagRepository extends JpaRepository<StoreHashtag, Long
 
   // 특정 가게에 특정 해시태그가 이미 존재하는지 확인
   boolean existsByStoreAndHashtag(Store store, Hashtag hashtag);
+
+  // 여러 해시태그 중 하나라도 연결된 StoreHashtag 목록을 조회
+  List<StoreHashtag> findByHashtagIn(List<Hashtag> hashtags);
 }

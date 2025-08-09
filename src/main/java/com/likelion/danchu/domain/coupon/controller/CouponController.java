@@ -52,11 +52,14 @@ public class CouponController {
       @Parameter(
               content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE),
               description = "쿠폰 정보(JSON)")
-          @RequestPart("couponRequest") @Valid CouponRequest.CreateRequest couponRequest,
+          @RequestPart("couponRequest")
+          @Valid
+          CouponRequest.CreateRequest couponRequest,
       @Parameter(
               content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE),
               description = "쿠폰 이미지")
-          @RequestPart(value = "image", required = true) MultipartFile imageFile) {
+          @RequestPart(value = "image", required = true)
+          MultipartFile imageFile) {
 
     CouponResponse response = couponService.createCoupon(couponRequest, imageFile);
     return ResponseEntity.status(HttpStatus.CREATED)

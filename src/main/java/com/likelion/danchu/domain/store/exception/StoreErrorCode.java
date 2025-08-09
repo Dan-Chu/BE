@@ -17,7 +17,8 @@ public enum StoreErrorCode implements BaseErrorCode {
   STORE_SAVE_FAILED("STORE_0003", "가게 저장에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   STORE_AUTHCODE_DUPLICATED("STORE_0004", "이미 사용 중인 인증 코드입니다.", HttpStatus.CONFLICT),
   EMPTY_KEYWORD("STORE_0005", "검색 키워드는 비어 있을 수 없습니다.", HttpStatus.BAD_REQUEST),
-  STORE_NOT_FOUND("STORE_0006", "해당 가게를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+  STORE_NOT_FOUND("STORE_0006", "해당 가게를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  EMPTY_HASHTAG_LIST("STORE_0007", "선택된 해시태그가 없습니다.", HttpStatus.BAD_REQUEST);
 
   private final String code;
   private final String message;

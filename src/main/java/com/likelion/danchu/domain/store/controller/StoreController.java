@@ -141,4 +141,14 @@ public class StoreController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.success("해시태그 생성에 성공했습니다.", hashtagResponse));
   }
+
+  @Operation(summary = "해시태그 기반 가게 필터링", description = "선택한 해시태그를 모두 포함하는 가게 목록을 페이징 조회합니다.")
+  @GetMapping("/filter")
+  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> filterStoresByHashtags(
+      @RequestParam List<String> tags,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "3") int size) {
+    PageableResponse<StoreResponse> result = storeService.filterStoresByHashtags(tags, page, size);
+    return ResponseEntity.ok(BaseResponse.success("가게 해시태그 필터 조회 성공했습니다.", result));
+  }
 }

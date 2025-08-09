@@ -1,5 +1,9 @@
 package com.likelion.danchu.domain.user.dto.response;
 
+import java.util.List;
+
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,4 +30,8 @@ public class UserResponse {
       example = "https://danchu.s3.ap-northeast-2.amazonaws.com/bucket/image.jpg",
       nullable = true)
   private String profileImageUrl;
+
+  @Builder.Default
+  @Schema(description = "관심 해시태그 목록 (없을 경우 빈 배열)", example = "[{\"id\": 1, \"name\": \"#조용한\"}]")
+  private List<HashtagResponse> hashtags = List.of();
 }

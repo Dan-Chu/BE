@@ -1,5 +1,6 @@
 package com.likelion.danchu.domain.coupon.mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,18 +15,25 @@ import com.likelion.danchu.domain.user.entity.User;
 public class CouponMapper {
 
   public Coupon toEntity(User user, Store store, String reward, String imageUrl) {
-    return Coupon.builder().user(user).store(store).reward(reward).imageUrl(imageUrl).build();
+    return Coupon.builder()
+        .user(user)
+        .store(store)
+        .reward(reward)
+        .imageUrl(imageUrl)
+        .expirationDate(LocalDate.now().plusMonths(3))
+        .build();
   }
 
   public CouponResponse toResponse(Coupon coupon) {
     if (coupon == null) return null;
+    String storeName = coupon.getStore().getName();
 
     return CouponResponse.builder()
         .id(coupon.getId())
-        .userId(coupon.getUser().getId())
-        .storeId(coupon.getStore().getId())
+        .storeName(storeName)
         .reward(coupon.getReward())
         .imageUrl(coupon.getImageUrl())
+        .expirationDate(coupon.getExpirationDate())
         .build();
   }
 

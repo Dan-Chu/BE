@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.coupon.entity;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,4 +47,7 @@ public class Coupon extends BaseTimeEntity {
 
   @Column(name = "image_url", nullable = false)
   private String imageUrl;
+
+  @Column(name = "expiration_date", nullable = false)
+  private LocalDate expirationDate;
 }

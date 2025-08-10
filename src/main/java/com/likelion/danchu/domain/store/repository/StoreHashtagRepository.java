@@ -17,4 +17,10 @@ public interface StoreHashtagRepository extends JpaRepository<StoreHashtag, Long
 
   // 여러 해시태그 중 하나라도 연결된 StoreHashtag 목록을 조회
   List<StoreHashtag> findByHashtagIn(List<Hashtag> hashtags);
+
+  // 가게 목록 페이징 조회 시 각 가게의 해시태그 모두 조회
+  List<StoreHashtag> findByStore_IdIn(List<Long> storeIds);
+
+  // 특정 가게 상세 조회 시 해시태그 모두 조회
+  List<StoreHashtag> findByStore_Id(Long storeId);
 }

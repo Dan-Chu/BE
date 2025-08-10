@@ -37,13 +37,13 @@ public class Mission extends BaseTimeEntity {
   @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 
-  @Column(name = "title", nullable = false)
+  @Column(name = "title", nullable = false, length = 50)
   private String title;
 
-  @Column(name = "description", nullable = false)
+  @Column(name = "description", nullable = false, length = 100)
   private String description;
 
-  @Column(name = "reward", nullable = false)
+  @Column(name = "reward", nullable = false, length = 100)
   private String reward;
 
   @Column(name = "date", nullable = false)

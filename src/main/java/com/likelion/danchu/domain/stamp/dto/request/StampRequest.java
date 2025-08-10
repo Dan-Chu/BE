@@ -16,5 +16,6 @@ import lombok.NoArgsConstructor;
 public class StampRequest {
 
   @NotBlank(message = "인증 코드는 필수입니다.")
+  @Schema(description = "가게 인증코드", example = "0000")
   private String authCode;
 }

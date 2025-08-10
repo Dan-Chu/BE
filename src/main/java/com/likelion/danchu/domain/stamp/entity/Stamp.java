@@ -2,6 +2,8 @@ package com.likelion.danchu.domain.stamp.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,22 +46,27 @@ public class Stamp extends BaseTimeEntity {
   @Column(name = "count", nullable = false)
   private int count = 1;
 
-  @Column(name = "reward", nullable = false)
+  @Column(name = "reward", nullable = true)
   private String reward;
 
   @Builder.Default
-  @Column(name = "is_used", nullable = false)
-  private boolean isUsed = false;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private StampStatus status = StampStatus.IN_PROGRESS;
 
-  public void useStamp() {
-    isUsed = true;
+  public void incrementCount() {
+    this.count++;
   }
 
-  public void unuseStamp() {
-    isUsed = false;
+  public int getCurrentCount() {
+    return count % 10;
   }
 
-  public void increaseCount() {
-    count++;
+  public int getCardNum() {
+    return count / 10;
+  }
+
+  public void updateStatus(StampStatus newStatus) {
+    this.status = newStatus;
   }
 }

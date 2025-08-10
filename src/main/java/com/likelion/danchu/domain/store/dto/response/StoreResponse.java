@@ -1,5 +1,9 @@
 package com.likelion.danchu.domain.store.dto.response;
 
+import java.util.List;
+
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,4 +36,10 @@ public class StoreResponse {
 
   @Schema(description = "대표 이미지 URL", example = "https://s3.amazonaws.com/bucket/image.jpg")
   private String mainImageUrl;
+
+  @Schema(description = "가게 해시태그 목록")
+  private List<HashtagResponse> hashtags;
+
+  @Schema(description = "현재 영업 여부", example = "true")
+  private boolean isOpen;
 }

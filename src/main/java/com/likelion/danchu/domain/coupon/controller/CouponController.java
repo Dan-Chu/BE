@@ -1,10 +1,13 @@
 package com.likelion.danchu.domain.coupon.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -64,5 +67,20 @@ public class CouponController {
     CouponResponse response = couponService.createCoupon(couponRequest, imageFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.success("쿠폰 생성이 완료되었습니다.", response));
+  }
+
+  @Operation(
+      summary = "쿠폰 전체 조회 (만료 제외, 임박순)",
+      description =
+          """
+      만료되지 않은 모든 쿠폰을 **만료일이 가까운 순서**로 조회합니다.
+      - 만료일(expirationDate)이 오늘 이후인 쿠폰만 반환합니다.
+      - 당장 소멸될 쿠폰부터 보여줍니다.
+      """)
+  @GetMapping
+  public ResponseEntity<BaseResponse<List<CouponResponse>>> getAllCoupons() {
+    List<CouponResponse> responses = couponService.getAllValidCoupons();
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(BaseResponse.success("쿠폰 목록을 조회했습니다.", responses));
   }
 }

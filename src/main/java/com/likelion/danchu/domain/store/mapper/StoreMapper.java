@@ -1,9 +1,13 @@
 package com.likelion.danchu.domain.store.mapper;
 
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
@@ -26,8 +30,24 @@ public class StoreMapper {
         .build();
   }
 
-  // Store Entity를 StoreResponse DTO로 변환
-  public StoreResponse toResponse(Store store) {
+  public StoreResponse toResponse(Store store, List<HashtagResponse> hashtags) {
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+    LocalTime open = LocalTime.parse(store.getOpenTime(), formatter);
+    LocalTime close = LocalTime.parse(store.getCloseTime(), formatter);
+    LocalTime now = LocalTime.now(ZoneId.of("Asia/Seoul"));
+
+    boolean isOpen;
+    if (open.equals(close)) {
+      isOpen = true; // 24시간 영업
+    } else if (open.isBefore(close)) {
+      // 일반 영업
+      isOpen = !now.isBefore(open) && now.isBefore(close);
+    } else {
+      // 자정을 넘기는 영업
+      isOpen = !now.isBefore(open) || now.isBefore(close);
+    }
+
     return StoreResponse.builder()
         .id(store.getId())
         .name(store.getName())
@@ -37,11 +57,12 @@ public class StoreMapper {
         .openTime(store.getOpenTime())
         .closeTime(store.getCloseTime())
         .mainImageUrl(store.getMainImageUrl())
+        .hashtags(hashtags != null ? hashtags : List.of()) // null 방어
+        .isOpen(isOpen)
         .build();
   }
 
-  // Store Entity List → StoreResponse DTO List
-  public List<StoreResponse> toResponseList(List<Store> stores) {
-    return stores.stream().map(this::toResponse).toList();
+  public StoreResponse toResponse(Store store) {
+    return toResponse(store, List.of());
   }
 }

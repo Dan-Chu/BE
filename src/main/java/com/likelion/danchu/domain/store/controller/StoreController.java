@@ -106,13 +106,17 @@ public class StoreController {
       summary = "가게 이름 검색",
       description = "검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.")
   @GetMapping("/search")
-  public ResponseEntity<BaseResponse<List<StoreResponse>>> searchStoresByKeyword(
-      @RequestParam("keyword") String keyword) {
-    List<StoreResponse> storeResponses = storeService.searchStoresByKeyword(keyword);
-    return ResponseEntity.ok(BaseResponse.success("가게 검색에 성공했습니다.", storeResponses));
+  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> searchStoresByKeyword(
+      @RequestParam String keyword,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "3") int size) {
+    PageableResponse<StoreResponse> storeResponse =
+        storeService.searchStoresByKeyword(keyword, page, size);
+
+    return ResponseEntity.ok(BaseResponse.success("가게 검색에 성공했습니다.", storeResponse));
   }
 
-  @Operation(summary = "가게 상세 조회", description = "storeId를 기반으로 특정 가게의 상세 정보를 조회합니다.")
+  @Operation(summary = "가게 상세 조회", description = "storeId를 기반으로 특정 가게의 상세 정보를 페이징 조회합니다.")
   @GetMapping("/{storeId}")
   public ResponseEntity<BaseResponse<StoreResponse>> getStoreDetail(
       @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId) {
@@ -142,13 +146,23 @@ public class StoreController {
         .body(BaseResponse.success("해시태그 생성에 성공했습니다.", hashtagResponse));
   }
 
-  @Operation(summary = "해시태그 기반 가게 필터링", description = "선택한 해시태그를 모두 포함하는 가게 목록을 페이징 조회합니다.")
+  @Operation(
+      summary = "해시태그 기반 가게 필터링",
+      description =
+          """
+              선택한 해시태그를 모두 포함하는 가게 목록을 페이징 조회합니다.
+
+              - 400: Hashtags 파라미터가 비었거나 유효하지 않음
+              - 404: 존재하지 않는 해시태그가 포함됨
+              - 먼저 /api/hashtags로 확인하고 사용하세요.
+              """)
   @GetMapping("/filter")
   public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> filterStoresByHashtags(
       @RequestParam List<String> tags,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "3") int size) {
-    PageableResponse<StoreResponse> result = storeService.filterStoresByHashtags(tags, page, size);
+    PageableResponse<StoreResponse> result =
+        storeHashtagService.filterStoresByHashtags(tags, page, size);
     return ResponseEntity.ok(BaseResponse.success("가게 해시태그 필터 조회 성공했습니다.", result));
   }
 }

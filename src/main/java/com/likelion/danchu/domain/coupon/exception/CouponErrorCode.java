@@ -17,6 +17,8 @@ public enum CouponErrorCode implements BaseErrorCode {
   IMAGE_UPLOAD_FAILED("COUPON_0003", "쿠폰 이미지 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   COUPON_SAVE_FAILED("COUPON_0004", "쿠폰 저장에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   IMAGE_REQUIRED("COUPON_0005", "쿠폰 이미지는 필수입니다.", HttpStatus.BAD_REQUEST),
+
+  COUPON_FETCH_FAILED("COUPON_0006", "쿠폰 조회에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   ;
 
   private final String code;

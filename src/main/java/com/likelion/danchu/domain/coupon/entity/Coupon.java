@@ -14,6 +14,7 @@ import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.user.entity.User;
 import com.likelion.danchu.global.common.BaseTimeEntity;
 
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,4 +46,7 @@ public class Coupon extends BaseTimeEntity {
 
   @Column(name = "image_url", nullable = false)
   private String imageUrl;
+
+  @Column(name = "expiration_date", nullable = false)
+  private LocalDate expirationDate;
 }

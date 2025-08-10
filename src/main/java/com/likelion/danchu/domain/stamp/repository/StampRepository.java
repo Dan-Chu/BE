@@ -10,5 +10,5 @@ import com.likelion.danchu.domain.stamp.entity.Stamp;
 @Repository
 public interface StampRepository extends JpaRepository<Stamp, Long> {
 
-  Optional<Stamp> findTopByUserIdAndStoreIdOrderByIdDesc(Long userId, Long storeId);
+  Optional<Stamp> findTopByUser_IdAndStore_IdOrderByIdDesc(Long userId, Long storeId);
 }

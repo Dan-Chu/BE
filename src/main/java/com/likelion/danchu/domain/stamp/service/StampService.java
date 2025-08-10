@@ -66,7 +66,7 @@ public class StampService {
       // 3) 동일 스탬프카드(해당 유저+가게의 최신 카드) 조회
       Stamp latest =
           stampRepository
-              .findTopByUserIdAndStoreIdOrderByIdDesc(user.getId(), store.getId())
+              .findTopByUser_IdAndStore_IdOrderByIdDesc(user.getId(), store.getId())
               .orElse(null);
 
       if (latest == null) {

@@ -26,11 +26,11 @@ public class CouponMapper {
 
   public CouponResponse toResponse(Coupon coupon) {
     if (coupon == null) return null;
+    String storeName = coupon.getStore().getName();
 
     return CouponResponse.builder()
         .id(coupon.getId())
-        .userId(coupon.getUser().getId())
-        .storeId(coupon.getStore().getId())
+        .storeName(storeName)
         .reward(coupon.getReward())
         .imageUrl(coupon.getImageUrl())
         .expirationDate(coupon.getExpirationDate())

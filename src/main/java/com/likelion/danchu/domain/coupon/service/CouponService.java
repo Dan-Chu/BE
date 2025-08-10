@@ -1,5 +1,8 @@
 package com.likelion.danchu.domain.coupon.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
@@ -75,6 +78,34 @@ public class CouponService {
 
     // 응답 변환
     return couponMapper.toResponse(saved);
+  }
+
+  /**
+   * 만료되지 않은 쿠폰 목록을 만료 임박순으로 전체 조회합니다.
+   *
+   * <p>오늘(LocalDate.now()) 기준으로 만료일(expirationDate)이 오늘 이후인 쿠폰만 반환하며, 만료일이 가까운 순서(오름차순)로 정렬됩니다.
+   *
+   * @return List<CouponResponse> 만료 임박순으로 정렬된 쿠폰 응답 DTO 리스트 (만료 쿠폰이 없으면 빈 리스트 반환)
+   * @throws CustomException 쿠폰 조회 중 DB 접근 오류나 예기치 못한 오류가 발생한 경우
+   */
+  public List<CouponResponse> getAllValidCoupons() {
+    try {
+      LocalDate today = LocalDate.now();
+
+      // DB에서 만료 제외 + 임박순으로 로드
+      List<Coupon> coupons =
+          couponRepository.findAllByExpirationDateGreaterThanEqualOrderByExpirationDateAsc(today);
+
+      // 빈 리스트는 정상 (예외 아님)
+      if (coupons.isEmpty()) {
+        return List.of();
+      }
+
+      return couponMapper.toResponseList(coupons);
+
+    } catch (Exception e) {
+      throw new CustomException(CouponErrorCode.COUPON_FETCH_FAILED);
+    }
   }
 
   public CouponResponse createCouponFromMission(Long missionId, Long userId) {

@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.coupon.entity;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,7 +16,6 @@ import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.user.entity.User;
 import com.likelion.danchu.global.common.BaseTimeEntity;
 
-import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -3,17 +3,20 @@ package com.likelion.danchu.domain.stamp.controller;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.likelion.danchu.domain.coupon.dto.response.CouponResponse;
 import com.likelion.danchu.domain.stamp.dto.request.StampRequest;
 import com.likelion.danchu.domain.stamp.dto.response.StampResponse;
 import com.likelion.danchu.domain.stamp.service.StampService;
 import com.likelion.danchu.global.response.BaseResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -49,5 +52,26 @@ public class StampController {
       @Valid @RequestBody StampRequest request) {
     StampResponse response = stampService.createOrAccumulate(request);
     return ResponseEntity.ok(BaseResponse.success("스탬프 적립이 완료되었습니다.", response));
+  }
+
+  @Operation(
+      summary = "보상 수령 (쿠폰 발급)",
+      description =
+          """
+        스탬프 10개 적립 후 활성화되는 '보상 수령하기' 동작입니다. (로그인 필요)
+
+        - 검증:
+          1) 해당 스탬프카드가 존재/본인 소유인지 확인
+          2) 상태가 **READY_TO_CLAIM** 이며 **count % 10 == 0** 인지 확인
+        - 처리:
+          1) 가게의 **stampReward**/**mainImageUrl** 기준으로 **쿠폰 발급**
+          2) 스탬프카드 **count++**, **IN_PROGRESS** 로 되돌림(다음 스탬프카드 시작)
+        """)
+  @PostMapping("/{stampId}/use")
+  public ResponseEntity<BaseResponse<CouponResponse>> claimReward(
+      @Parameter(description = "보상 수령할 스탬프카드 ID", example = "1") @PathVariable Long stampId) {
+
+    CouponResponse coupon = stampService.claimReward(stampId);
+    return ResponseEntity.ok(BaseResponse.success("쿠폰 수령이 완료되었습니다.", coupon));
   }
 }

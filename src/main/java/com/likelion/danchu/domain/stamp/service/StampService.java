@@ -5,6 +5,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import com.likelion.danchu.domain.coupon.dto.response.CouponResponse;
+import com.likelion.danchu.domain.coupon.service.CouponService;
 import com.likelion.danchu.domain.stamp.dto.request.StampRequest;
 import com.likelion.danchu.domain.stamp.dto.response.StampResponse;
 import com.likelion.danchu.domain.stamp.entity.Stamp;
@@ -31,6 +33,7 @@ public class StampService {
   private final StampRepository stampRepository;
   private final StampMapper stampMapper;
   private final StoreRepository storeRepository;
+  private final CouponService couponService;
 
   /**
    * 인증코드로 가게를 식별해 스탬프를 생성/적립합니다.
@@ -98,6 +101,58 @@ public class StampService {
     } catch (DataAccessException dae) {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
     } catch (Exception e) {
+      throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
+    }
+  }
+
+  /**
+   * 스탬프 10개 달성 시 '보상 수령' 처리. 조건: READY_TO_CLAIM && (count % 10 == 0) 처리: 가게의
+   * stampReward/mainImageUrl로 쿠폰 발급 → count++ 및 IN_PROGRESS로 전환.
+   *
+   * @param stampId 수령할 스탬프카드 ID
+   * @return 발급된 쿠폰 정보
+   * @throws CustomException USER_NOT_FOUND, STAMP_NOT_FOUND, STAMP_OWNER_MISMATCH,
+   *     STAMP_NOT_READY_TO_CLAIM, STAMP_SAVE_FAILED, STORE_NOT_FOUND, COUPON_SAVE_FAILED
+   */
+  public CouponResponse claimReward(Long stampId) {
+    // 1) 현재 로그인 사용자
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    // 2) 스탬프카드 조회 + 소유자 검증
+    Stamp stamp =
+        stampRepository
+            .findById(stampId)
+            .orElseThrow(() -> new CustomException(StampErrorCode.STAMP_NOT_FOUND));
+
+    if (!stamp.getUser().getId().equals(user.getId())) {
+      throw new CustomException(StampErrorCode.STAMP_OWNER_MISMATCH);
+    }
+
+    // 3) 수령 가능 상태 검증 (원칙: READY_TO_CLAIM 이고 10의 배수여야 함)
+    boolean ready = stamp.getStatus() == StampStatus.READY_TO_CLAIM && stamp.getCurrentCount() == 0;
+    if (!ready) {
+      throw new CustomException(StampErrorCode.STAMP_NOT_READY_TO_CLAIM);
+    }
+
+    try {
+      // 4) 쿠폰 발급 (가게 기준)
+      Long storeId = stamp.getStore().getId();
+      CouponResponse coupon = couponService.createCouponFromStore(storeId, user.getId());
+
+      // 5) 스탬프카드 다음 라운드로 (count++ & IN_PROGRESS)
+      stamp.incrementCount(); // 10 -> 11
+      stamp.updateStatus(StampStatus.IN_PROGRESS);
+      stampRepository.save(stamp);
+
+      return coupon;
+
+    } catch (CustomException ce) {
+      throw ce;
+    } catch (RuntimeException e) {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
     }
   }

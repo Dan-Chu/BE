@@ -17,6 +17,10 @@ public enum StampErrorCode implements BaseErrorCode {
   INVALID_STAMP_STATUS("STAMP_0003", "유효하지 않은 스탬프 상태입니다.", HttpStatus.BAD_REQUEST),
 
   STAMP_SAVE_FAILED("STAMP_0004", "스탬프 저장에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+  STAMP_NOT_FOUND("STAMP_0010", "해당 스탬프카드를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  STAMP_OWNER_MISMATCH("STAMP_0011", "본인의 스탬프카드만 수령할 수 있습니다.", HttpStatus.FORBIDDEN),
+  STAMP_NOT_READY_TO_CLAIM("STAMP_0012", "보상 수령이 가능한 상태가 아닙니다.", HttpStatus.BAD_REQUEST),
   ;
 
   private final String code;

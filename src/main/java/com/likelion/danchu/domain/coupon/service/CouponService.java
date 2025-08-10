@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -155,6 +156,29 @@ public class CouponService {
       Coupon coupon = couponMapper.toEntity(user, store, reward, imageUrl);
       return couponRepository.save(coupon);
     } catch (Exception e) {
+      throw new CustomException(CouponErrorCode.COUPON_SAVE_FAILED);
+    }
+  }
+
+  public CouponResponse createCouponFromStore(Long storeId, Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    Store store =
+        storeRepository
+            .findById(storeId)
+            .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+
+    String reward = normalizeReward(store.getStampReward());
+    String imageUrl = store.getMainImageUrl();
+
+    try {
+      Coupon toSave = couponMapper.toEntity(user, store, reward, imageUrl);
+      Coupon saved = couponRepository.save(toSave);
+      return couponMapper.toResponse(saved);
+    } catch (DataAccessException e) {
       throw new CustomException(CouponErrorCode.COUPON_SAVE_FAILED);
     }
   }

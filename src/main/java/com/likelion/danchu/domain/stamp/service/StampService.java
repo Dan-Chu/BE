@@ -1,5 +1,8 @@
 package com.likelion.danchu.domain.stamp.service;
 
+import java.util.Comparator;
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.dao.DataAccessException;
@@ -99,6 +102,46 @@ public class StampService {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
     } catch (Exception e) {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
+    }
+  }
+
+  /**
+   * 현재 로그인 사용자의 스탬프카드 중 "완성 임박(= count % 10이 큰)" 카드 1장을 반환합니다.
+   *
+   * <p>대상은 {@code IN_PROGRESS} 상태의 카드만이며, 정렬 우선순위는 (1) {@code currentCount = count % 10} 내림차순, (2)
+   * {@code updatedAt} 내림차순입니다.
+   *
+   * @return StampResponse 가장 임박한 카드 1장 (없으면 null)
+   * @throws CustomException 사용자 미존재 또는 DB 조회 오류 시
+   */
+  @Transactional
+  public StampResponse getMostExpiringStamp() {
+    // 1) 현재 로그인 사용자
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    try {
+      // 2) 유저의 모든 스탬프 카드 조회 (최근 수정 순으로 가져오면 tie-break에 유리)
+      List<Stamp> stamps = stampRepository.findAllByUser_IdOrderByUpdatedAtDesc(user.getId());
+
+      // 3) IN_PROGRESS만 대상으로, currentCount DESC → updatedAt DESC 로 1개 선택
+      Stamp candidate =
+          stamps.stream()
+              .filter(s -> s.getStatus() == StampStatus.IN_PROGRESS)
+              .max(
+                  Comparator.comparingInt(Stamp::getCurrentCount) // 1순위: count%10
+                      .thenComparing(Stamp::getUpdatedAt)) // 2순위: updatedAt
+              .orElse(null);
+
+      return candidate == null ? null : stampMapper.toResponse(candidate);
+
+    } catch (CustomException ce) {
+      throw ce;
+    } catch (RuntimeException e) {
+      throw new CustomException(StampErrorCode.STAMP_FETCH_FAILED);
     }
   }
 }

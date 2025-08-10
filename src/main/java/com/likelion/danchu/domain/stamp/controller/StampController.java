@@ -3,6 +3,7 @@ package com.likelion.danchu.domain.stamp.controller;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,5 +50,24 @@ public class StampController {
       @Valid @RequestBody StampRequest request) {
     StampResponse response = stampService.createOrAccumulate(request);
     return ResponseEntity.ok(BaseResponse.success("스탬프 적립이 완료되었습니다.", response));
+  }
+
+  @Operation(
+      summary = "완성 임박 스탬프카드 단건 조회",
+      description =
+          """
+        현재 로그인 사용자의 스탬프카드 중 **완성에 가장 임박한 카드 1장**을 반환합니다. (로그인 필요)
+
+        - 대상: 상태가 **IN_PROGRESS** 인 카드
+        - 정렬 우선순위:
+          1) **count % 10** **내림차순** (완성까지 남은 칸이 가장 적은 카드 우선)
+          2) **updatedAt **내림차순** (동일 개수일 때 더 최근에 적립/수정된 카드 우선)
+        - 없으면 **data: null** 로 반환
+        """)
+  @GetMapping("/expiring")
+  public ResponseEntity<BaseResponse<StampResponse>> getMostExpiringStamp() {
+    StampResponse response = stampService.getMostExpiringStamp();
+    String message = (response == null) ? "아직 스탬프카드가 없어요! 스탬프카드를 생성해주세요." : "완성 임박 스탬프카드 조회 성공";
+    return ResponseEntity.ok(BaseResponse.success(message, response));
   }
 }

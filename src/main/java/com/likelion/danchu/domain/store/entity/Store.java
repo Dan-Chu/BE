@@ -50,4 +50,7 @@ public class Store extends BaseTimeEntity {
 
   @Column(name = "main_image_url", nullable = false)
   private String mainImageUrl;
+
+  @Column(name = "stamp_reward", nullable = true)
+  private String stampReward;
 }

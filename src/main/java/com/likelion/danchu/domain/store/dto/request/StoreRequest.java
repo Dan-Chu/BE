@@ -53,4 +53,7 @@ public class StoreRequest {
   @Pattern(regexp = "^\\d{4}$", message = "인증 코드는 숫자 4자리여야 합니다.")
   @Schema(description = "가게 인증 코드 (숫자 4자리)", example = "0123")
   private String authCode;
+
+  @Schema(description = "스탬프카드 적립 보상", example = "무료 아메리카노 1잔")
+  private String stampReward;
 }

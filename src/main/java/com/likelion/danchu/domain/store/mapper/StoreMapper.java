@@ -26,6 +26,7 @@ public class StoreMapper {
         .closeTime(storeRequest.getCloseTime())
         .authCode(storeRequest.getAuthCode())
         .mainImageUrl(imageUrl)
+        .stampReward(storeRequest.getStampReward())
         .build();
   }
 

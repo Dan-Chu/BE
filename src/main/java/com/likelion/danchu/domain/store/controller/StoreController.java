@@ -1,22 +1,9 @@
 package com.likelion.danchu.domain.store.controller;
 
-import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
-import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
-import com.likelion.danchu.domain.store.dto.request.StoreRequest;
-import com.likelion.danchu.domain.store.dto.response.PageableResponse;
-import com.likelion.danchu.domain.store.dto.response.StoreResponse;
-import com.likelion.danchu.domain.store.exception.StoreErrorCode;
-import com.likelion.danchu.domain.store.service.StoreHashtagService;
-import com.likelion.danchu.domain.store.service.StoreService;
-import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.response.BaseResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +16,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
+import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+import com.likelion.danchu.domain.store.dto.request.StoreRequest;
+import com.likelion.danchu.domain.store.dto.response.PageableResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreResponse;
+import com.likelion.danchu.domain.store.exception.StoreErrorCode;
+import com.likelion.danchu.domain.store.service.StoreHashtagService;
+import com.likelion.danchu.domain.store.service.StoreService;
+import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.global.response.BaseResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +48,7 @@ public class StoreController {
       description =
           """
               새로운 가게 정보를 등록합니다.
-              
+
               ✅ 필수 입력값:
               - 가게 이름: **1자 이상, 10자 이내**
               - 주소: **1자 이상, 50자 이내**
@@ -53,7 +57,7 @@ public class StoreController {
               - 오픈/마감 시간: **HH:mm** 형식 (예: 09:00, 21:00)
               - 인증 코드: **숫자 4자리 (예: 0123)**
               - 이미지 파일: **multipart/form-data** 형식
-              
+
               ✅ 유의사항:
               - 동일한 주소의 가게는 중복 등록할 수 없습니다.
               - 인증 코드는 가게마다 고유해야 하며, 중복될 수 없습니다.
@@ -61,12 +65,12 @@ public class StoreController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<BaseResponse<StoreResponse>> createStore(
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
-      @RequestPart("storeRequest")
-      @Valid
-      StoreRequest storeRequest,
+          @RequestPart("storeRequest")
+          @Valid
+          StoreRequest storeRequest,
       @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-      @RequestPart("image")
-      MultipartFile imageFile) {
+          @RequestPart("image")
+          MultipartFile imageFile) {
 
     if (imageFile == null || imageFile.isEmpty()) {
       throw new CustomException(StoreErrorCode.IMAGE_UPLOAD_FAILED);
@@ -82,10 +86,10 @@ public class StoreController {
       description =
           """
               페이지 번호(page)와 사이즈(size)를 기반으로 전체 가게를 페이징 조회합니다.
-              
+
               ✅ 기본 설정:
               - **한 페이지당 3개의 가게**가 표시됩니다.
-              
+
               ✅ 파라미터 설명:
               - page : 0부터 시작하는 페이지 번호입니다. (예: 첫 번째 페이지 → page=0)
               - size : 페이지 당 보여줄 가게 수입니다. (기본값: 3)
@@ -125,7 +129,7 @@ public class StoreController {
       description =
           """
               특정 가게에 해시태그를 등록합니다.
-              
+
               - 해시태그 이름은 **'#' 없이 입력해도 자동으로 붙여집니다**.
               - 영어는 **모두 소문자로 변환**되어 저장됩니다.
               - 이름은 **비어 있을 수 없으며**, 최소 1자 이상, 최대 10자 이하로 입력해야 합니다.
@@ -133,8 +137,8 @@ public class StoreController {
   @PostMapping("/{storeId}/hashtags")
   public ResponseEntity<BaseResponse<HashtagResponse>> createHashtagForStore(
       @Parameter(name = "storeId", description = "가게 ID", example = "1", required = true)
-      @PathVariable
-      Long storeId,
+          @PathVariable
+          Long storeId,
       @Valid @RequestBody HashtagRequest hashtagRequest) {
     HashtagResponse hashtagResponse =
         storeHashtagService.createHashtagForStore(storeId, hashtagRequest);
@@ -147,7 +151,7 @@ public class StoreController {
       description =
           """
               선택한 해시태그를 모두 포함하는 가게 목록을 페이징 조회합니다.
-              
+
               - 400: Hashtags 파라미터가 비었거나 유효하지 않음
               - 404: 존재하지 않는 해시태그가 포함됨
               - 먼저 /api/hashtags로 확인하고 사용하세요.

@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.stamp.service;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.dao.DataAccessException;
@@ -99,6 +101,29 @@ public class StampService {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
     } catch (Exception e) {
       throw new CustomException(StampErrorCode.STAMP_SAVE_FAILED);
+    }
+  }
+
+  /**
+   * 현재 로그인 사용자의 모든 스탬프카드를 최근 수정 순으로 전체 조회합니다.
+   *
+   * <p>정렬 기준: {@code updatedAt DESC} (가장 최근에 적립/변경된 카드가 먼저).
+   *
+   * @return List<StampResponse> 사용자가 가진 스탬프카드 목록 (없으면 빈 리스트)
+   * @throws CustomException 사용자 미존재 또는 DB 조회 중 오류가 발생한 경우
+   */
+  public List<StampResponse> getMyStamps() {
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    try {
+      List<Stamp> stamps = stampRepository.findAllByUser_IdOrderByUpdatedAtDesc(user.getId());
+      return stampMapper.toResponseList(stamps);
+    } catch (RuntimeException e) {
+      throw new CustomException(StampErrorCode.STAMP_FETCH_FAILED);
     }
   }
 }

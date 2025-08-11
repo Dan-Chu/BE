@@ -17,6 +17,8 @@ public enum StampErrorCode implements BaseErrorCode {
   INVALID_STAMP_STATUS("STAMP_0003", "유효하지 않은 스탬프 상태입니다.", HttpStatus.BAD_REQUEST),
 
   STAMP_SAVE_FAILED("STAMP_0004", "스탬프 저장에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+  STAMP_FETCH_FAILED("STAMP_0006", "스탬프 조회에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   ;
 
   private final String code;

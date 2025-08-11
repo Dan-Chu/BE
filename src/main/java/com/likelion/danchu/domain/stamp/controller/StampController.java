@@ -1,8 +1,11 @@
 package com.likelion.danchu.domain.stamp.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,5 +52,21 @@ public class StampController {
       @Valid @RequestBody StampRequest request) {
     StampResponse response = stampService.createOrAccumulate(request);
     return ResponseEntity.ok(BaseResponse.success("스탬프 적립이 완료되었습니다.", response));
+  }
+
+  @Operation(
+      summary = "내 스탬프카드 전체 조회(최근 수정 순)",
+      description =
+          """
+      현재 로그인한 사용자가 보유한 모든 스탬프카드를 **최근 수정 순(내림차순)** 으로 반환합니다. (로그인 필요)
+
+      - 정렬: updatedAt DESC (마지막 적립/상태변경 시점이 최신일수록 먼저)
+      - 반환: id, storeName, reward, currentCount, cardNum, status
+      - 비고: 없으면 빈 배열([]) 반환
+      """)
+  @GetMapping("")
+  public ResponseEntity<BaseResponse<List<StampResponse>>> getMyStamps() {
+    List<StampResponse> response = stampService.getMyStamps();
+    return ResponseEntity.ok(BaseResponse.success("스탬프카드 목록 조회 성공", response));
   }
 }

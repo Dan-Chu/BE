@@ -1,10 +1,13 @@
 package com.likelion.danchu.domain.user.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.auth.service.AuthService;
 import com.likelion.danchu.domain.user.dto.request.UserRequest;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
 import com.likelion.danchu.domain.user.service.UserService;
@@ -30,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "User", description = "User 관련 API")
 public class UserController {
   private final UserService userService;
+  private final AuthService authService;
 
   @Operation(
       summary = "회원가입",
@@ -124,5 +129,33 @@ public class UserController {
 
     UserResponse response = userService.getUserInfo();
     return ResponseEntity.ok(BaseResponse.success("회원 정보 조회 성공", response));
+  }
+
+  @Operation(
+      summary = "회원 탈퇴",
+      description =
+          """
+      현재 로그인한 사용자를 **영구 삭제**합니다.
+
+      인증
+      - JWT 필수: **Authorization: Bearer <AccessToken>**
+
+      삭제/정리 범위
+      - S3: 사용자 프로필 이미지, 사용자가 보유한 쿠폰 이미지
+      - DB: userHashtag, stamp(스탬프카드), coupon(쿠폰), user(사용자)
+      - Redis: refreshToken, completedMission 캐시
+      - 토큰 무효화: Access Token 블랙리스트 등록, refreshToken 쿠키/Redis 삭제(즉시 로그아웃)
+
+      주의
+      - 삭제 후 복구할 수 없습니다.
+      - 처리 직후부터 기존 토큰으로의 인증이 필요한 모든 API 호출은 차단됩니다.
+      """)
+  @DeleteMapping("")
+  public ResponseEntity<BaseResponse<String>> deleteMe(
+      HttpServletRequest request, HttpServletResponse response) {
+
+    userService.deleteCurrentUser();
+    authService.invalidateCurrentSessionQuietly(request, response);
+    return ResponseEntity.ok(BaseResponse.success("회원 탈퇴가 완료되었습니다."));
   }
 }

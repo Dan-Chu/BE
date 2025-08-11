@@ -14,4 +14,6 @@ public interface StampRepository extends JpaRepository<Stamp, Long> {
   Optional<Stamp> findTopByUser_IdAndStore_IdOrderByIdDesc(Long userId, Long storeId);
 
   List<Stamp> findAllByUser_IdOrderByUpdatedAtDesc(Long userId);
+
+  void deleteAllByUser_Id(Long userId);
 }

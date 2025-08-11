@@ -13,4 +13,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
   // 가장 임박한 쿠폰 → 가장 여유 있는 쿠폰 순서로 조회
   List<Coupon> findAllByExpirationDateGreaterThanEqualOrderByExpirationDateAsc(LocalDate date);
+
+  List<Coupon> findAllByUser_Id(Long userId);
+
+  void deleteAllByUser_Id(Long userId);
 }

@@ -16,6 +16,7 @@ import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 import com.likelion.danchu.domain.user.dto.request.UserRequest;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
 import com.likelion.danchu.domain.user.entity.User;
+import com.likelion.danchu.domain.user.exception.UserErrorCode;
 import com.likelion.danchu.domain.user.mapper.UserMapper;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.domain.user.service.UserService;
@@ -67,7 +68,7 @@ public class AuthService {
     User user =
         userRepository
             .findById(1L)
-            .orElseThrow(() -> new CustomException(AuthErrorCode.AUTHENTICATION_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     return issueTokensAndSetResponse(user, response);
   }
 
@@ -201,5 +202,19 @@ public class AuthService {
     cookie.setPath("/");
     cookie.setMaxAge(0);
     response.addCookie(cookie);
+  }
+
+  /**
+   * 현재 세션(토큰)을 무효화합니다. - AccessToken: 블랙리스트 등록 - RefreshToken: Redis 삭제 - 쿠키: refreshToken 즉시 만료
+   *
+   * <p>logout()을 호출하되 예외가 나도 흡수해서 탈퇴 트랜잭션에 영향 주지 않음.
+   */
+  public void invalidateCurrentSessionQuietly(
+      HttpServletRequest request, HttpServletResponse response) {
+    try {
+      logout(request, response);
+    } catch (CustomException ignore) {
+      deleteRefreshTokenCookie(response);
+    }
   }
 }

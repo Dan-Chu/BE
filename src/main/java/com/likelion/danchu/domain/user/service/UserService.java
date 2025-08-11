@@ -11,10 +11,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.coupon.entity.Coupon;
+import com.likelion.danchu.domain.coupon.repository.CouponRepository;
 import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
 import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 import com.likelion.danchu.domain.hashtag.exception.HashtagErrorCode;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
+import com.likelion.danchu.domain.stamp.repository.StampRepository;
 import com.likelion.danchu.domain.user.dto.request.UserRequest;
 import com.likelion.danchu.domain.user.dto.request.UserRequest.InfoRequest;
 import com.likelion.danchu.domain.user.dto.response.UserResponse;
@@ -45,6 +48,8 @@ public class UserService {
   private final UserRepository userRepository;
   private final HashtagRepository hashtagRepository;
   private final UserHashtagRepository userHashtagRepository;
+  private final CouponRepository couponRepository;
+  private final StampRepository stampRepository;
   private final RedisUtil redisUtil;
 
   /**
@@ -269,5 +274,50 @@ public class UserService {
     redisUtil.setData(redisKey, String.valueOf(count));
 
     return count;
+  }
+
+  /**
+   * 회원 탈퇴(하드 삭제): S3/DB/Redis의 사용자 관련 자원을 모두 정리합니다.
+   *
+   * <p>순서: 1) S3 이미지 삭제 (사용자 프로필 + 사용자의 모든 쿠폰 이미지) 2) DB 자원 삭제 (userHashtag → stamp → coupon →
+   * user) 3) Redis 키 삭제 (completedMission 캐시)
+   *
+   * @throws CustomException 사용자 없음 {@link UserErrorCode#USER_NOT_FOUND}
+   * @throws CustomException S3 삭제 실패 {@link UserErrorCode#S3_DELETE_FAILED}
+   * @throws CustomException DB 삭제 실패 {@link UserErrorCode#USER_DELETE_FAILED}
+   */
+  public void deleteCurrentUser() {
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    // 1) S3 이미지 삭제
+    try {
+      if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()) {
+        s3Service.deleteByUrl(user.getProfileImageUrl());
+      }
+      for (Coupon c : couponRepository.findAllByUser_Id(userId)) {
+        if (c.getImageUrl() != null && !c.getImageUrl().isBlank()) {
+          s3Service.deleteByUrl(c.getImageUrl());
+        }
+      }
+    } catch (RuntimeException e) {
+      throw new CustomException(UserErrorCode.S3_DELETE_FAILED);
+    }
+
+    // 2) DB 연관 자원 삭제 (자식 → 부모)
+    try {
+      userHashtagRepository.deleteAllByUser_Id(userId);
+      stampRepository.deleteAllByUser_Id(userId);
+      couponRepository.deleteAllByUser_Id(userId);
+      userRepository.delete(user);
+    } catch (RuntimeException e) {
+      throw new CustomException(UserErrorCode.USER_DELETE_FAILED);
+    }
+
+    // 3) Redis 캐시 삭제 (completedMission)
+    redisUtil.deleteData("user:completedMission:" + userId);
   }
 }

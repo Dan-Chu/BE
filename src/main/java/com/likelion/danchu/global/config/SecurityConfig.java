@@ -1,5 +1,8 @@
 package com.likelion.danchu.global.config;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,13 +33,23 @@ public class SecurityConfig {
     http.csrf(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
-        .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
-        .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .cors(c -> c.configurationSource(corsConfig.corsConfigurationSource()))
+        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+        // 🔐 미인증(401) & 권한없음(403) 최소 설정
+        .exceptionHandling(
+            e ->
+                e.authenticationEntryPoint((req, res, ex) -> res.sendError(SC_UNAUTHORIZED)) // 401
+                    .accessDeniedHandler((req, res, ex) -> res.sendError(SC_FORBIDDEN)) // 403
+            )
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
-                        "/", "/api/users/register", "/api/auth/login/**", "/api/auth/refresh")
+                        "/",
+                        "/api/users/register",
+                        "/api/auth/login/**",
+                        "/api/auth/refresh",
+                        "/api/s3/**")
                     .permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()

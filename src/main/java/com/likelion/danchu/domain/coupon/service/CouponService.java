@@ -208,4 +208,27 @@ public class CouponService {
       throw new CustomException(CouponErrorCode.COUPON_SAVE_FAILED);
     }
   }
+
+  public CouponResponse createCouponFromStore(Long storeId, Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    Store store =
+        storeRepository
+            .findById(storeId)
+            .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+
+    String reward = normalizeReward(store.getStampReward());
+    String imageUrl = store.getMainImageUrl();
+
+    try {
+      Coupon toSave = couponMapper.toEntity(user, store, reward, imageUrl);
+      Coupon saved = couponRepository.save(toSave);
+      return couponMapper.toResponse(saved);
+    } catch (DataAccessException e) {
+      throw new CustomException(CouponErrorCode.COUPON_SAVE_FAILED);
+    }
+  }
 }

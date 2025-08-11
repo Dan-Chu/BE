@@ -10,15 +10,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.coupon.dto.response.CouponResponse;
 import com.likelion.danchu.domain.hashtag.service.HashtagService;
 import com.likelion.danchu.domain.mission.dto.request.MissionRequest;
 import com.likelion.danchu.domain.mission.dto.response.MissionResponse;
 import com.likelion.danchu.domain.mission.service.MissionService;
+import com.likelion.danchu.domain.stamp.dto.request.StampRequest;
 import com.likelion.danchu.global.response.BaseResponse;
 import com.likelion.danchu.global.security.SecurityUtil;
 
@@ -79,5 +82,28 @@ public class MissionController {
   public ResponseEntity<BaseResponse<MissionResponse>> getMission(@PathVariable Long missionId) {
     MissionResponse response = missionService.getMission(missionId);
     return ResponseEntity.ok(BaseResponse.success("미션 조회에 성공했습니다.", response));
+  }
+
+  @Operation(
+      summary = "미션 인증번호 입력 (미션 완료 인증)",
+      description =
+          """
+              가게 인증코드를 입력하여 미션을 완료 처리하고, 보상 쿠폰을 **쿠폰함**으로 지급합니다. (로그인 필요)
+
+              처리 순서:
+              1) missionId로 미션 조회
+              2) authCode로 가게 조회
+              3) 미션의 가게와 인증코드의 가게 일치 검증
+              4) 검증 성공 시 보상 쿠폰 발급
+              """)
+  @PostMapping(
+      path = "/{missionId}/complete",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<CouponResponse>> completeMission(
+      @PathVariable Long missionId, @Valid @RequestBody StampRequest stampRequest) {
+    CouponResponse response =
+        missionService.completeMissionWithAuthCode(missionId, stampRequest.getAuthCode());
+    return ResponseEntity.ok(BaseResponse.success("미션 완료! 쿠폰함에 성공적으로 추가되었습니다.", response));
   }
 }

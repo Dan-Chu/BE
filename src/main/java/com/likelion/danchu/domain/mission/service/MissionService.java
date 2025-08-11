@@ -9,6 +9,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.coupon.dto.response.CouponResponse;
+import com.likelion.danchu.domain.coupon.service.CouponService;
 import com.likelion.danchu.domain.mission.dto.request.MissionRequest;
 import com.likelion.danchu.domain.mission.dto.response.MissionResponse;
 import com.likelion.danchu.domain.mission.entity.Mission;
@@ -24,6 +26,7 @@ import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.redis.RedisUtil;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
+import com.likelion.danchu.global.security.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +41,7 @@ public class MissionService {
   private final MissionMapper missionMapper;
   private final UserRepository userRepository;
   private final RedisUtil redisUtil;
+  private final CouponService couponService;
 
   /**
    * 미션 생성 - 가게 존재 여부 검증
@@ -93,7 +97,14 @@ public class MissionService {
   }
 
   /**
-   * 미션 완료 처리 유저의 완료 미션 ID 리스트에 missionId를 추가한다(중복 시 무시) 새로 추가된 경우에만 완료 카운트/Redis 값을 증가시킨다.
+   * 미션 완료 처리
+   *
+   * <p>동작:
+   *
+   * <ul>
+   *   <li>유저의 완료 미션 ID 리스트에 {@code missionId} 추가 (이미 있으면 무시)
+   *   <li>새로 추가된 경우에만 완료 카운트 증가 및 Redis 동기화
+   * </ul>
    *
    * @param userId 완료 처리하는 사용자 ID
    * @param missionId 완료할 미션 ID
@@ -165,5 +176,85 @@ public class MissionService {
             .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
 
     return missionMapper.toResponse(mission);
+  }
+
+  /**
+   * 인증코드 기반 미션 완료 처리 및 쿠폰 발급
+   *
+   * <p>처리 순서:
+   *
+   * <ul>
+   *   <li>인증코드로 가게 조회
+   *   <li>미션의 가게와 일치 검증
+   *   <li>쿠폰 발급 후 완료 이력/카운트 기록
+   * </ul>
+   *
+   * @param missionId 미션 ID
+   * @param authCode 가게 인증코드
+   * @return 지급된 쿠폰 응답
+   */
+  public CouponResponse completeMissionWithAuthCode(Long missionId, String authCode) {
+    Long userId = SecurityUtil.getCurrentUserId();
+
+    // 1) 미션 조회
+    Mission mission =
+        missionRepository
+            .findById(missionId)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    // 2) 인증코드 → 가게 조회
+    Store authStore =
+        storeRepository
+            .findByAuthCode(authCode)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.INVALID_AUTH_CODE));
+
+    // 3) 미션 가게 일치 검증
+    if (!mission.getStore().getId().equals(authStore.getId())) {
+      throw new CustomException(MissionErrorCode.MISSION_STORE_MISMATCH);
+    }
+
+    // 4) 완료 기록 (중복이면 예외)
+    markCompletedOrThrow(userId, missionId);
+
+    // 5) 쿠폰 발급
+    CouponResponse coupon = couponService.createCouponFromMission(missionId, userId);
+
+    // 6) Redis 카운트 동기화 (엔티티 값 기준으로 세팅)
+    syncCompletedCountToRedis(userId);
+
+    return coupon;
+  }
+
+  /** 같은 유저가 같은 미션을 중복 완료하지 못하게 막기 */
+  private void markCompletedOrThrow(Long userId, Long missionId) {
+    // 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    // 미션 존재 검증
+    missionRepository
+        .findById(missionId)
+        .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    // 이미 있으면 false → 중복 완료
+    boolean added = user.addCompletedMissionId(missionId);
+    if (!added) {
+      throw new CustomException(MissionErrorCode.ALREADY_COMPLETED);
+    }
+
+    // 카운트 증가 (엔티티)
+    user.increaseCompletedMission();
+  }
+
+  /** Redis 카운트를 User의 현재 completedMission 값으로 동기화 */
+  private void syncCompletedCountToRedis(Long userId) {
+    String key = "user:completedMission:" + userId;
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+    redisUtil.setData(key, String.valueOf(user.getCompletedMission()));
   }
 }

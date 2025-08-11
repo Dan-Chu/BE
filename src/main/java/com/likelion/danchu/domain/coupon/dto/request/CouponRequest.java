@@ -25,4 +25,15 @@ public class CouponRequest {
     @Schema(description = "쿠폰 내용", example = "무료 아메리카노 1잔")
     private String reward;
   }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Schema(name = "UseRequest", description = "쿠폰 사용 요청")
+  public static class UseRequest {
+
+    @NotBlank(message = "인증 코드는 필수입니다.")
+    @Schema(description = "가게 인증코드", example = "0000")
+    private String authCode;
+  }
 }

@@ -109,6 +109,55 @@ public class CouponService {
     }
   }
 
+  /**
+   * 쿠폰 사용(삭제) 처리 로직입니다.
+   *
+   * <p>요청 바디의 인증코드(authCode)로 가게를 검증한 뒤, PathVariable의 {@code couponId}에 해당하는 쿠폰을 소유자/가게 일치 여부 확인 후
+   * **삭제 처리**합니다.
+   *
+   * @param couponId 삭제(사용)할 쿠폰 ID
+   * @param request 가게 인증코드가 담긴 요청 바디
+   * @throws com.likelion.danchu.global.exception.CustomException 사용자 없음({@code USER_NOT_FOUND}),
+   *     인증코드 무효({@code INVALID_AUTH_CODE}), 쿠폰 미존재({@code COUPON_NOT_FOUND}), 소유자 불일치({@code
+   *     COUPON_OWNER_MISMATCH}), 가게 불일치({@code COUPON_STORE_MISMATCH}), 삭제 실패({@code
+   *     COUPON_DELETE_FAILED}) 시 발생
+   */
+  public void useCoupon(Long couponId, CouponRequest.UseRequest request) {
+    // 1) 현재 로그인 사용자
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    // 2) 인증코드로 가게 조회
+    Store store =
+        storeRepository
+            .findByAuthCode(request.getAuthCode())
+            .orElseThrow(() -> new CustomException(CouponErrorCode.INVALID_AUTH_CODE));
+
+    // 3) 쿠폰 조회
+    Coupon coupon =
+        couponRepository
+            .findById(couponId)
+            .orElseThrow(() -> new CustomException(CouponErrorCode.COUPON_NOT_FOUND));
+
+    // 4) 가게 검증
+    if (!coupon.getUser().getId().equals(user.getId())) {
+      throw new CustomException(CouponErrorCode.COUPON_OWNER_MISMATCH);
+    }
+    if (!coupon.getStore().getId().equals(store.getId())) {
+      throw new CustomException(CouponErrorCode.COUPON_STORE_MISMATCH);
+    }
+
+    // 5) 삭제
+    try {
+      couponRepository.delete(coupon);
+    } catch (DataAccessException e) {
+      throw new CustomException(CouponErrorCode.COUPON_DELETE_FAILED);
+    }
+  }
+
   public CouponResponse createCouponFromMission(Long missionId, Long userId) {
     User user =
         userRepository

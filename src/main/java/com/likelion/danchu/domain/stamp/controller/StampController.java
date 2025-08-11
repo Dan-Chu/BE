@@ -1,9 +1,12 @@
 package com.likelion.danchu.domain.stamp.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,5 +76,40 @@ public class StampController {
 
     CouponResponse coupon = stampService.claimReward(stampId);
     return ResponseEntity.ok(BaseResponse.success("쿠폰 수령이 완료되었습니다.", coupon));
+  }
+
+  @Operation(
+      summary = "완성 임박 스탬프카드 단건 조회",
+      description =
+          """
+        현재 로그인 사용자의 스탬프카드 중 **완성에 가장 임박한 카드 1장**을 반환합니다. (로그인 필요)
+
+        - 대상: 상태가 **IN_PROGRESS** 인 카드
+        - 정렬 우선순위:
+          1) **count % 10** **내림차순** (완성까지 남은 칸이 가장 적은 카드 우선)
+          2) **updatedAt **내림차순** (동일 개수일 때 더 최근에 적립/수정된 카드 우선)
+        - 없으면 **data: null** 로 반환
+        """)
+  @GetMapping("/expiring")
+  public ResponseEntity<BaseResponse<StampResponse>> getMostExpiringStamp() {
+    StampResponse response = stampService.getMostExpiringStamp();
+    String message = (response == null) ? "아직 스탬프카드가 없어요! 스탬프카드를 생성해주세요." : "완성 임박 스탬프카드 조회 성공";
+    return ResponseEntity.ok(BaseResponse.success(message, response));
+  }
+
+  @Operation(
+      summary = "내 스탬프카드 전체 조회(최근 수정 순)",
+      description =
+          """
+      현재 로그인한 사용자가 보유한 모든 스탬프카드를 **최근 수정 순(내림차순)** 으로 반환합니다. (로그인 필요)
+
+      - 정렬: updatedAt DESC (마지막 적립/상태변경 시점이 최신일수록 먼저)
+      - 반환: id, storeName, reward, currentCount, cardNum, status
+      - 비고: 없으면 빈 배열([]) 반환
+      """)
+  @GetMapping("")
+  public ResponseEntity<BaseResponse<List<StampResponse>>> getMyStamps() {
+    List<StampResponse> response = stampService.getMyStamps();
+    return ResponseEntity.ok(BaseResponse.success("스탬프카드 목록 조회 성공", response));
   }
 }

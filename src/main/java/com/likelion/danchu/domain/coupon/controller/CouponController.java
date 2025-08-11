@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -82,5 +84,29 @@ public class CouponController {
     List<CouponResponse> responses = couponService.getAllValidCoupons();
     return ResponseEntity.status(HttpStatus.OK)
         .body(BaseResponse.success("쿠폰 목록을 조회했습니다.", responses));
+  }
+
+  @Operation(
+      summary = "쿠폰 사용",
+      description =
+          """
+        쿠폰을 사용 처리(삭제)합니다. (로그인 필요)
+
+        - 검증 절차:
+          1) **authCode**로 가게 식별 (불일치 시 오류)
+          2) **couponId**로 쿠폰 조회 (없으면 오류)
+          3) 쿠폰의 **가게/소유자** 검증 (불일치 시 오류)
+          4) 검증 통과 시 **쿠폰 삭제**
+        """)
+  @PostMapping(
+      path = "/{couponId}/use",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<String>> useCoupon(
+      @Parameter(description = "사용(삭제)할 쿠폰 ID", example = "1") @PathVariable Long couponId,
+      @Valid @RequestBody CouponRequest.UseRequest request) {
+
+    couponService.useCoupon(couponId, request);
+    return ResponseEntity.ok(BaseResponse.success("쿠폰 사용/삭제 처리가 완료되었습니다."));
   }
 }

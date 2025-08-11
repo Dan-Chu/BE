@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -71,5 +72,12 @@ public class MissionController {
     Long userId = SecurityUtil.getCurrentUserId();
     List<MissionResponse> responses = missionService.getTodayMissions(userId);
     return ResponseEntity.ok(BaseResponse.success("오늘의 미션 조회 성공", responses));
+  }
+
+  @Operation(summary = "미션 상세 조회", description = "미션 상세 내용을 조회합니다.")
+  @GetMapping("/{missionId}")
+  public ResponseEntity<BaseResponse<MissionResponse>> getMission(@PathVariable Long missionId) {
+    MissionResponse response = missionService.getMission(missionId);
+    return ResponseEntity.ok(BaseResponse.success("미션 조회에 성공했습니다.", response));
   }
 }

@@ -17,6 +17,9 @@ public class MissionResponse {
   @Schema(description = "대상 가게 ID", example = "1")
   private Long storeId;
 
+  @Schema(description = "가게 이름", example = "동방손칼국수")
+  private String storeName;
+
   @Schema(description = "미션 제목", example = "오픈 시간 방문 미션")
   private String title;
 

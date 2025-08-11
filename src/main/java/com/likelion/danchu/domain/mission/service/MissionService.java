@@ -1,5 +1,14 @@
 package com.likelion.danchu.domain.mission.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+
+import jakarta.transaction.Transactional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.likelion.danchu.domain.coupon.dto.response.CouponResponse;
 import com.likelion.danchu.domain.coupon.service.CouponService;
 import com.likelion.danchu.domain.mission.dto.request.MissionRequest;
@@ -18,13 +27,8 @@ import com.likelion.danchu.global.redis.RedisUtil;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
 import com.likelion.danchu.global.security.SecurityUtil;
-import jakarta.transaction.Transactional;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +47,7 @@ public class MissionService {
    * 미션 생성 - 가게 존재 여부 검증
    *
    * @param missionRequest 미션 생성 요청 본문(JSON)
-   * @param imageFile      보상 이미지 파일(선택)
+   * @param imageFile 보상 이미지 파일(선택)
    * @return 생성된 미션 응답
    */
   public MissionResponse createMission(MissionRequest missionRequest, MultipartFile imageFile) {
@@ -102,7 +106,7 @@ public class MissionService {
    *   <li>새로 추가된 경우에만 완료 카운트 증가 및 Redis 동기화
    * </ul>
    *
-   * @param userId    완료 처리하는 사용자 ID
+   * @param userId 완료 처리하는 사용자 ID
    * @param missionId 완료할 미션 ID
    * @throws CustomException 미션 또는 사용자 미존재 시 예외 발생
    */
@@ -186,7 +190,7 @@ public class MissionService {
    * </ul>
    *
    * @param missionId 미션 ID
-   * @param authCode  가게 인증코드
+   * @param authCode 가게 인증코드
    * @return 지급된 쿠폰 응답
    */
   public CouponResponse completeMissionWithAuthCode(Long missionId, String authCode) {
@@ -221,9 +225,7 @@ public class MissionService {
     return coupon;
   }
 
-  /**
-   * 같은 유저가 같은 미션을 중복 완료하지 못하게 막기
-   */
+  /** 같은 유저가 같은 미션을 중복 완료하지 못하게 막기 */
   private void markCompletedOrThrow(Long userId, Long missionId) {
     // 사용자 조회
     User user =
@@ -246,9 +248,7 @@ public class MissionService {
     user.increaseCompletedMission();
   }
 
-  /**
-   * Redis 카운트를 User의 현재 completedMission 값으로 동기화
-   */
+  /** Redis 카운트를 User의 현재 completedMission 값으로 동기화 */
   private void syncCompletedCountToRedis(Long userId) {
     String key = "user:completedMission:" + userId;
     User user =

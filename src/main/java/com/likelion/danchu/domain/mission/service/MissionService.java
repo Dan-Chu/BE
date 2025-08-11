@@ -150,4 +150,20 @@ public class MissionService {
       redisUtil.setData(redisKey, String.valueOf(user.getCompletedMission()));
     }
   }
+
+  /**
+   * 미션 상세 조회
+   *
+   * @param missionId 조회할 미션의 ID
+   * @return 해당 ID의 미션 상세 응답
+   * @throws CustomException 미션이 존재하지 않는 경우
+   */
+  public MissionResponse getMission(Long missionId) {
+    Mission mission =
+        missionRepository
+            .findById(missionId)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    return missionMapper.toResponse(mission);
+  }
 }

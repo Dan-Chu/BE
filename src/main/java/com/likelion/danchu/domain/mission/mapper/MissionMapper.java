@@ -25,6 +25,7 @@ public class MissionMapper {
     return MissionResponse.builder()
         .id(mission.getId())
         .storeId(mission.getStore().getId())
+        .storeName(mission.getStore().getName())
         .title(mission.getTitle())
         .description(mission.getDescription())
         .reward(mission.getReward())

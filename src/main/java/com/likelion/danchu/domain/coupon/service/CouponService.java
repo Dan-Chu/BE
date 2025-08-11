@@ -173,9 +173,13 @@ public class CouponService {
     if (store == null) {
       throw new CustomException(StoreErrorCode.STORE_NOT_FOUND);
     }
-
     String reward = normalizeReward(mission.getReward());
+
+    // 미션에서 설정된 이미지가 없다면 가게 메인 이미지 사용하여 쿠폰 생성
     String imageUrl = mission.getRewardImageUrl();
+    if (imageUrl == null || imageUrl.isBlank()) {
+      imageUrl = store.getMainImageUrl();
+    }
 
     Coupon saved = saveCoupon(user, store, reward, imageUrl);
     return couponMapper.toResponse(saved);

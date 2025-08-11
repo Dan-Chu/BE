@@ -168,7 +168,8 @@ public class AuthService {
     response.setHeader("Authorization", "Bearer " + accessToken);
   }
 
-  private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, long maxAgeSec) {
+  private void setRefreshTokenCookie(
+      HttpServletResponse response, String refreshToken, long maxAgeSec) {
     ResponseCookie.ResponseCookieBuilder cookie =
         ResponseCookie.from("refreshToken", refreshToken)
             .httpOnly(true)

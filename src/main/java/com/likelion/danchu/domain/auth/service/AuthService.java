@@ -1,5 +1,6 @@
 package com.likelion.danchu.domain.auth.service;
 
+import java.time.Duration;
 import java.util.List;
 
 import jakarta.servlet.http.Cookie;
@@ -8,6 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -167,13 +170,19 @@ public class AuthService {
   }
 
   private void setRefreshTokenCookie(
-      HttpServletResponse response, String refreshToken, long maxAgeSeconds) {
-    Cookie cookie = new Cookie("refreshToken", refreshToken);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(secure);
-    cookie.setPath("/");
-    cookie.setMaxAge((int) maxAgeSeconds);
-    response.addCookie(cookie);
+      HttpServletResponse response, String refreshToken, long maxAgeSec) {
+    ResponseCookie.ResponseCookieBuilder cookie =
+        ResponseCookie.from("refreshToken", refreshToken)
+            .httpOnly(true)
+            .path("/")
+            .maxAge(Duration.ofSeconds(maxAgeSec));
+
+    if (secure) {
+      cookie.secure(true).sameSite("None").domain(".danchu.site"); // cross-site 방지 (배포용 HTTPS 설정)
+    } else {
+      cookie.secure(false).sameSite("Lax"); // localhost
+    }
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.build().toString());
   }
 
   private String extractRefreshTokenFromCookie(HttpServletRequest request) {
@@ -196,12 +205,15 @@ public class AuthService {
   }
 
   private void deleteRefreshTokenCookie(HttpServletResponse response) {
-    Cookie cookie = new Cookie("refreshToken", null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(secure);
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
+    ResponseCookie.ResponseCookieBuilder cookie =
+        ResponseCookie.from("refreshToken", "").httpOnly(true).path("/").maxAge(Duration.ZERO);
+
+    if (secure) {
+      cookie.secure(true).sameSite("None").domain(".danchu.site");
+    } else {
+      cookie.secure(false).sameSite("Lax");
+    }
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.build().toString());
   }
 
   /**

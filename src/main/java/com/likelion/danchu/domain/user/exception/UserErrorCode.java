@@ -16,7 +16,10 @@ public enum UserErrorCode implements BaseErrorCode {
   DUPLICATE_EMAIL("USER_0002", "이미 사용 중인 이메일입니다.", HttpStatus.BAD_REQUEST),
   IMAGE_UPLOAD_FAILED("USER_0003", "프로필 이미지 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   USER_SAVE_FAILED("USER_0004", "회원 정보 저장에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-  USER_NOT_FOUND("USER_0005", "회원을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+  USER_NOT_FOUND("USER_0005", "회원을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+  USER_DELETE_FAILED("USER_0006", "사용자 삭제에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+  S3_DELETE_FAILED("USER_0007", "S3 이미지 삭제에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   ;
 
   private final String code;

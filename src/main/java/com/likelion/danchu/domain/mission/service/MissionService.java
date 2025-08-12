@@ -316,4 +316,33 @@ public class MissionService {
     mission.changeDate(request.getDate());
     return missionMapper.toResponse(mission);
   }
+
+  /**
+   * 미션 복제 생성: 완료 이력 때문에 날짜 변경이 불가한 경우, 동일한 내용으로 새 날짜에 미션을 생성
+   *
+   * @param missionId 복제할 원본 미션 ID
+   * @param request 새로 생성할 날짜가 담긴 요청 바디
+   * @return 새로 생성된 미션의 상세 응답
+   * @throws CustomException MISSION_NOT_FOUND(원본 없음), DUPLICATE_MISSION(동일 store+title+date 존재)
+   */
+  public MissionResponse cloneMission(Long missionId, MissionRequest.CloneRequest request) {
+    // 원본 미션 조회
+    final Mission src =
+        missionRepository
+            .findById(missionId)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    // 동일 가게+제목+요청 날짜 중복 금지
+    boolean exists =
+        missionRepository.existsByStoreIdAndDateAndTitle(
+            src.getStore().getId(), request.getDate(), src.getTitle());
+    if (exists) {
+      throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);
+    }
+
+    Mission cloned = missionMapper.toClone(src, request.getDate());
+
+    Mission saved = missionRepository.save(cloned);
+    return missionMapper.toResponse(saved);
+  }
 }

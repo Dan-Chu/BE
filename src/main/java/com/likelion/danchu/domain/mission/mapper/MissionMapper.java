@@ -34,4 +34,15 @@ public class MissionMapper {
         .rewardImageUrl(mission.getRewardImageUrl())
         .build();
   }
+
+  public Mission toClone(Mission src, java.time.LocalDate newDate) {
+    return Mission.builder()
+        .store(src.getStore())
+        .title(src.getTitle())
+        .description(src.getDescription())
+        .reward(src.getReward())
+        .date(newDate)
+        .rewardImageUrl(src.getRewardImageUrl())
+        .build();
+  }
 }

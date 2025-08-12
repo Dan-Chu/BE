@@ -64,4 +64,17 @@ public class MissionRequest {
     @Schema(description = "변경할 날짜 (yyyy-MM-dd)", example = "2025-08-20")
     private LocalDate date;
   }
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Schema(name = "CloneRequest", description = "미션 복제 생성 요청(새 날짜)")
+  public static class CloneRequest {
+
+    @NotNull(message = "새 날짜는 필수입니다.")
+    @FutureOrPresent(message = "미션 날짜는 오늘 이후여야 합니다.")
+    @Schema(description = "복제 생성할 날짜 (yyyy-MM-dd)", example = "2025-08-21")
+    private LocalDate date;
+  }
 }

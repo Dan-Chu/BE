@@ -123,11 +123,11 @@ public class MissionController {
       summary = "미션 날짜 변경",
       description =
           """
-          특정 미션의 진행 날짜를 변경합니다.
-          - 날짜 형식: **yyyy-MM-dd**
-          - 오늘 또는 미래 날짜만 허용
-          - 같은 가게/제목 조합에서 동일 날짜가 이미 존재하면 409(CONFLICT)
-          """)
+              특정 미션의 진행 날짜를 변경합니다.
+              - 날짜 형식: **yyyy-MM-dd**
+              - 오늘 또는 미래 날짜만 허용
+              - 같은 가게/제목 조합에서 동일 날짜가 이미 존재하면 409(CONFLICT)
+              """)
   @PutMapping(
       path = "/date",
       consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -137,5 +137,25 @@ public class MissionController {
 
     MissionResponse response = missionService.updateMissionDate(request);
     return ResponseEntity.ok(BaseResponse.success("미션 날짜 변경에 성공했습니다.", response));
+  }
+
+  @Operation(
+      summary = "미션 복제 생성",
+      description =
+          """
+          완료 이력으로 날짜 변경이 불가할 때, 동일한 내용으로 다른 날짜에 새 미션을 생성합니다.
+          - 날짜 형식: **yyyy-MM-dd**
+          - 오늘 또는 미래 날짜만 허용
+          - 같은 가게/제목/날짜가 이미 있으면 409(CONFLICT)
+          """)
+  @PostMapping(
+      path = "/{missionId}/clone",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<MissionResponse>> cloneMission(
+      @PathVariable Long missionId, @Valid @RequestBody MissionRequest.CloneRequest request) {
+    MissionResponse response = missionService.cloneMission(missionId, request);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(BaseResponse.success("미션 복제 생성에 성공했습니다.", response));
   }
 }

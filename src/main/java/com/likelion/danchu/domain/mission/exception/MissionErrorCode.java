@@ -1,9 +1,11 @@
 package com.likelion.danchu.domain.mission.exception;
 
+import org.springframework.http.HttpStatus;
+
 import com.likelion.danchu.global.exception.model.BaseErrorCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor

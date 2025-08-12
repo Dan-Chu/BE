@@ -48,4 +48,14 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
               """,
       nativeQuery = true)
   Long findMostCompletedMissionId(@Param("today") java.time.LocalDate today);
+
+  // 동일 가게/제목/날짜 조합과 같은 다른 미션 존재 여부 확인(자기 자신 id 제외) — 날짜 변경 시 중복 검사용
+  boolean existsByStoreIdAndDateAndTitleAndIdNot(
+      Long storeId, LocalDate date, String title, Long id);
+
+  // 특정 미션의 완료 이력(조인 테이블) 건수를 반환 (0보다 크면 완료 이력 존재)
+  @Query(
+      value = "SELECT COUNT(*) FROM user_completed_mission WHERE mission_id = :missionId",
+      nativeQuery = true)
+  long countCompletionsByMissionId(@Param("missionId") Long missionId);
 }

@@ -10,7 +10,8 @@ import com.likelion.danchu.domain.store.entity.Store;
 @Component
 public class MissionMapper {
 
-  public Mission toEntity(Store store, MissionRequest missionRequest, String rewardImageUrl) {
+  public Mission toEntity(
+      Store store, MissionRequest.CreateRequest missionRequest, String rewardImageUrl) {
     return Mission.builder()
         .store(store)
         .title(missionRequest.getTitle())
@@ -31,6 +32,17 @@ public class MissionMapper {
         .reward(mission.getReward())
         .date(mission.getDate())
         .rewardImageUrl(mission.getRewardImageUrl())
+        .build();
+  }
+
+  public Mission toClone(Mission src, java.time.LocalDate newDate) {
+    return Mission.builder()
+        .store(src.getStore())
+        .title(src.getTitle())
+        .description(src.getDescription())
+        .reward(src.getReward())
+        .date(newDate)
+        .rewardImageUrl(src.getRewardImageUrl())
         .build();
   }
 }

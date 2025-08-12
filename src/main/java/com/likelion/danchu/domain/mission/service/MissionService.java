@@ -50,7 +50,8 @@ public class MissionService {
    * @param imageFile 보상 이미지 파일(선택)
    * @return 생성된 미션 응답
    */
-  public MissionResponse createMission(MissionRequest missionRequest, MultipartFile imageFile) {
+  public MissionResponse createMission(
+      MissionRequest.CreateRequest missionRequest, MultipartFile imageFile) {
 
     // 가게 존재 여부 확인
     Store store =
@@ -284,5 +285,64 @@ public class MissionService {
             .findById(topId)
             .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
     return missionMapper.toResponse(mission);
+  }
+
+  /** 미션 날짜 변경: 동일 가게+제목 조합에서 같은 날짜로의 중복 금지, 오늘/미래만 허용 */
+  public MissionResponse updateMissionDate(MissionRequest.DateUpdateRequest request) {
+    // 대상 미션 조회
+    final Mission mission =
+        missionRepository
+            .findById(request.getMissionId())
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    // 완료 이력 있는 경우 변경 금지
+    if (missionRepository.countCompletionsByMissionId(mission.getId()) > 0) {
+      throw new CustomException(MissionErrorCode.MISSION_DATE_CHANGE_FORBIDDEN);
+    }
+
+    // 동일 가게+제목 조합에서 동일 날짜 충돌 검사
+    final boolean duplicated =
+        missionRepository.existsByStoreIdAndDateAndTitleAndIdNot(
+            mission.getStore().getId(), request.getDate(), mission.getTitle(), mission.getId());
+    if (duplicated) {
+      throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);
+    }
+
+    // 요청한 날짜가 현재 날짜와 같으면 변경 없이 그대로 반환(불필요한 업데이트 방지)
+    if (request.getDate().equals(mission.getDate())) {
+      return missionMapper.toResponse(mission);
+    }
+
+    mission.changeDate(request.getDate());
+    return missionMapper.toResponse(mission);
+  }
+
+  /**
+   * 미션 복제 생성: 완료 이력 때문에 날짜 변경이 불가한 경우, 동일한 내용으로 새 날짜에 미션을 생성
+   *
+   * @param missionId 복제할 원본 미션 ID
+   * @param request 새로 생성할 날짜가 담긴 요청 바디
+   * @return 새로 생성된 미션의 상세 응답
+   * @throws CustomException MISSION_NOT_FOUND(원본 없음), DUPLICATE_MISSION(동일 store+title+date 존재)
+   */
+  public MissionResponse cloneMission(Long missionId, MissionRequest.CloneRequest request) {
+    // 원본 미션 조회
+    final Mission src =
+        missionRepository
+            .findById(missionId)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+
+    // 동일 가게+제목+요청 날짜 중복 금지
+    boolean exists =
+        missionRepository.existsByStoreIdAndDateAndTitle(
+            src.getStore().getId(), request.getDate(), src.getTitle());
+    if (exists) {
+      throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);
+    }
+
+    Mission cloned = missionMapper.toClone(src, request.getDate());
+
+    Mission saved = missionRepository.save(cloned);
+    return missionMapper.toResponse(saved);
   }
 }

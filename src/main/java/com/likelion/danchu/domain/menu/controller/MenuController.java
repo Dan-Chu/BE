@@ -1,10 +1,13 @@
 package com.likelion.danchu.domain.menu.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,5 +61,12 @@ public class MenuController {
     MenuResponse menuResponse = menuService.createMenu(storeId, request, imageFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.success("메뉴 생성이 완료되었습니다.", menuResponse));
+  }
+
+  @Operation(summary = "메뉴 전체 조회", description = "생성한 가게의 모든 메뉴를 조회합니다.")
+  @GetMapping
+  public ResponseEntity<BaseResponse<List<MenuResponse>>> getMenus(@PathVariable Long storeId) {
+    List<MenuResponse> responses = menuService.getMenus(storeId);
+    return ResponseEntity.ok(BaseResponse.success("메뉴 전체 조회에 성공했습니다.", responses));
   }
 }

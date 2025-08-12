@@ -10,13 +10,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OpenAIResponse {
-  private List<Choice> choices;
+  private List<Datum> data;
 
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
-  public static class Choice {
+  public static class Datum {
+    private List<Double> embedding;
     private int index;
-    private Message message;
+    private String object;
   }
 }

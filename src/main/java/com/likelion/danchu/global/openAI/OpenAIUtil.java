@@ -1,56 +1,55 @@
 package com.likelion.danchu.global.openAI;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likelion.danchu.domain.openAI.dto.request.OpenAIRequest;
+import com.likelion.danchu.domain.openAI.dto.response.OpenAIResponse;
 
 public class OpenAIUtil {
 
   private final RestTemplate restTemplate;
   private final String baseUrl;
-  private final String model;
-  private final Double temperature;
-  private final Integer maxTokens;
-  private static final ObjectMapper OM = new ObjectMapper();
+  private final String embeddingModel;
 
-  public OpenAIUtil(
-      RestTemplate restTemplate,
-      String baseUrl,
-      String model,
-      Double temperature,
-      Integer maxTokens) {
+  public OpenAIUtil(RestTemplate restTemplate, String baseUrl, String embeddingModel) {
     this.restTemplate = restTemplate;
     this.baseUrl = baseUrl;
-    this.model = model;
-    this.temperature = temperature;
-    this.maxTokens = maxTokens;
+    this.embeddingModel = embeddingModel;
   }
 
-  public String chat(String prompt) {
-    OpenAIRequest req = new OpenAIRequest(model, prompt, temperature, maxTokens);
+  /** 여러 문장을 한 번에 임베딩 */
+  public List<double[]> embedAll(List<String> inputs) {
+    if (inputs == null || inputs.isEmpty()) return List.of();
 
-    String raw = restTemplate.postForObject(baseUrl + "/chat/completions", req, String.class);
-    if (raw == null || raw.isBlank()) return "";
+    OpenAIRequest req = new OpenAIRequest(embeddingModel, inputs);
+    OpenAIResponse res =
+        restTemplate.postForObject(baseUrl + "/embeddings", req, OpenAIResponse.class);
 
-    try {
-      JsonNode root = OM.readTree(raw);
-      JsonNode content = root.path("choices").path(0).path("message").path("content");
-      if (content.isTextual()) return content.asText();
+    if (res == null || res.getData() == null || res.getData().isEmpty()) return List.of();
 
-      // 혹시 배열 파츠 형태일 때 text 필드 이어붙이기
-      if (content.isArray()) {
-        StringBuilder sb = new StringBuilder();
-        for (JsonNode p : content) {
-          String t = p.path("text").asText("");
-          if (!t.isBlank()) sb.append(t);
-        }
-        return sb.toString();
-      }
-      return "";
-    } catch (Exception ignore) {
-      return "";
+    List<double[]> out = new ArrayList<>(res.getData().size());
+    for (var d : res.getData()) {
+      List<Double> v = d.getEmbedding();
+      double[] arr = new double[v.size()];
+      for (int i = 0; i < v.size(); i++) arr[i] = v.get(i);
+      out.add(arr);
     }
+    return out;
+  }
+
+  /** 코사인 유사도 */
+  public static double cosine(double[] a, double[] b) {
+    if (a == null || b == null || a.length != b.length) return -1.0;
+    double dot = 0.0, na = 0.0, nb = 0.0;
+    for (int i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    if (na == 0 || nb == 0) return -1.0;
+    return dot / (Math.sqrt(na) * Math.sqrt(nb));
   }
 }

@@ -15,4 +15,6 @@ public interface UserHashtagRepository extends JpaRepository<UserHashtag, Long> 
   List<UserHashtag> findAllByUser(User user);
 
   void deleteAllByUser_Id(Long userId);
+
+  List<UserHashtag> findByUser_Id(Long userId);
 }

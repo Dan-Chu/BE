@@ -18,17 +18,11 @@ public class OpenAIConfig {
   @Value("${openai.base-url}")
   private String baseUrl;
 
-  @Value("${openai.model}")
-  private String model;
+  @Value("${openai.embedding-model}")
+  private String embeddingModel;
 
   @Value("${openai.timeout-millis}")
   private int timeoutMillis;
-
-  @Value("${openai.temperature}")
-  private Double temperature;
-
-  @Value("${openai.max-tokens}")
-  private Integer maxTokens;
 
   @Bean
   public RestTemplate openAiRestTemplate() {
@@ -49,6 +43,6 @@ public class OpenAIConfig {
 
   @Bean
   public OpenAIUtil openAiUtil(RestTemplate openAiRestTemplate) {
-    return new OpenAIUtil(openAiRestTemplate, baseUrl, model, temperature, maxTokens);
+    return new OpenAIUtil(openAiRestTemplate, baseUrl, embeddingModel);
   }
 }

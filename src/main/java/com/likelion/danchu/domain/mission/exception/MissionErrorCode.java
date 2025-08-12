@@ -1,11 +1,9 @@
 package com.likelion.danchu.domain.mission.exception;
 
-import org.springframework.http.HttpStatus;
-
 import com.likelion.danchu.global.exception.model.BaseErrorCode;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -18,7 +16,8 @@ public enum MissionErrorCode implements BaseErrorCode {
   MISSION_NOT_FOUND("MISSION_0004", "해당 미션을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   INVALID_AUTH_CODE("MISSION_0005", "올바르지 않은 인증코드입니다.", HttpStatus.BAD_REQUEST),
   MISSION_STORE_MISMATCH("MISSION_0006", "미션의 가게와 인증코드가 일치하지 않습니다.", HttpStatus.FORBIDDEN),
-  ALREADY_COMPLETED("MISSION_0007", "이미 완료한 미션입니다.", HttpStatus.CONFLICT);
+  ALREADY_COMPLETED("MISSION_0007", "이미 완료한 미션입니다.", HttpStatus.CONFLICT),
+  POPULAR_MISSION_NOT_FOUND("MISSION_0008", "완료된 미션 기록이 없습니다.", HttpStatus.NOT_FOUND);
 
   private final String code;
   private final String message;

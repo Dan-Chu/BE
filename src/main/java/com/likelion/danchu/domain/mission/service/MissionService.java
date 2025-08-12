@@ -257,4 +257,30 @@ public class MissionService {
             .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     redisUtil.setData(key, String.valueOf(user.getCompletedMission()));
   }
+
+  /**
+   * 가장 많이 완료된 인기 미션 1건을 조회합니다.
+   *
+   * <p>동작 순서:
+   *
+   * <ul>
+   *   <li>완료 이력 테이블(user_completed_mission)에서 집계하여 가장 많이 완료된 미션 ID 조회
+   *   <li>해당 ID의 미션 상세 정보를 조회
+   *   <li>미션이 존재하지 않거나 완료 이력이 없으면 예외 발생
+   * </ul>
+   *
+   * @return 가장 인기 있는 미션의 상세 응답
+   * @throws CustomException 완료 이력이 없거나 미션이 존재하지 않는 경우
+   */
+  public MissionResponse getPopularMission() {
+    Long topId = missionRepository.findMostCompletedMissionId();
+    if (topId == null) {
+      throw new CustomException(MissionErrorCode.POPULAR_MISSION_NOT_FOUND);
+    }
+    Mission mission =
+        missionRepository
+            .findById(topId)
+            .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
+    return missionMapper.toResponse(mission);
+  }
 }

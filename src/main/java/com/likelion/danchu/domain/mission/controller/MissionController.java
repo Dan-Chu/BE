@@ -106,4 +106,11 @@ public class MissionController {
         missionService.completeMissionWithAuthCode(missionId, stampRequest.getAuthCode());
     return ResponseEntity.ok(BaseResponse.success("미션 완료! 쿠폰함에 성공적으로 추가되었습니다.", response));
   }
+
+  @Operation(summary = "인기 미션 조회", description = "사용자들이 가장 많이 완료한 미션 1건을 반환합니다.")
+  @GetMapping("/popular")
+  public ResponseEntity<BaseResponse<MissionResponse>> getPopularMission() {
+    MissionResponse missionResponse = missionService.getPopularMission();
+    return ResponseEntity.ok(BaseResponse.success("인기 미션 조회 성공", missionResponse));
+  }
 }

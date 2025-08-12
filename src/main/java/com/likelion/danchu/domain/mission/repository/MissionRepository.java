@@ -1,14 +1,12 @@
 package com.likelion.danchu.domain.mission.repository;
 
+import com.likelion.danchu.domain.mission.entity.Mission;
 import java.time.LocalDate;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import com.likelion.danchu.domain.mission.entity.Mission;
 
 @Repository
 public interface MissionRepository extends JpaRepository<Mission, Long> {
@@ -19,16 +17,32 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
   // 오늘 날짜 미션 중 해당 유저가 아직 완료 안한 미션만
   @Query(
       """
-        select m
-        from Mission m
-        where m.date = :today
-          and not exists (
-            select 1
-            from User u
-            where u.id = :userId
-              and m.id member of u.completedMissionIds
-          )
-      """)
+            select m
+            from Mission m
+            where m.date = :today
+              and not exists (
+                select 1
+                from User u
+                where u.id = :userId
+                  and m.id member of u.completedMissionIds
+              )
+          """)
   List<Mission> findTodayNotCompleted(
       @Param("today") LocalDate today, @Param("userId") Long userId);
+
+  // 가장 많이 완료된 미션 1건의 ID
+  @Query(
+      value =
+          """
+              SELECT m.id
+              FROM mission m
+              JOIN user_completed_mission ucm ON ucm.mission_id = m.id
+              GROUP BY m.id
+              ORDER BY
+                  COUNT(DISTINCT ucm.user_id) DESC,  -- 1순위: 완료한 "유저 수"가 많은 순
+                  m.date DESC                        -- 2순위: 미션 날짜가 최신인 순
+              LIMIT 1;                               -- 최종적으로 위 조건에 맞는 1건만 가져오기
+              """,
+      nativeQuery = true)
+  Long findMostCompletedMissionId();
 }

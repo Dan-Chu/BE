@@ -24,7 +24,7 @@ public enum AuthErrorCode implements BaseErrorCode {
   ILLEGAL_ARGUMENT("JWT_4005", "JWT 토큰 값이 잘못되었습니다.", HttpStatus.UNAUTHORIZED),
 
   INVALID_AUTH_CONTEXT("AUTH_4007", "SecurityContext에 인증 정보가 없습니다.", HttpStatus.UNAUTHORIZED),
-  AUTHENTICATION_NOT_FOUND("AUTH_4008", "인증되지 않은 사용자입니다.", HttpStatus.UNAUTHORIZED),
+  AUTHENTICATION_NOT_FOUND("AUTH_4008", "로그인이 필요합니다.", HttpStatus.UNAUTHORIZED),
   INVALID_PASSWORD("AUTH_4009", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
   ;
 

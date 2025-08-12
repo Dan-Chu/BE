@@ -32,13 +32,14 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
   List<Mission> findTodayNotCompleted(
       @Param("today") LocalDate today, @Param("userId") Long userId);
 
-  // 가장 많이 완료된 미션 1건의 ID
+  // 가장 많이 완료된 오늘의 미션 1건의 ID
   @Query(
       value =
           """
               SELECT m.id
               FROM mission m
               JOIN user_completed_mission ucm ON ucm.mission_id = m.id
+              WHERE m.date = :today
               GROUP BY m.id
               ORDER BY
                   COUNT(DISTINCT ucm.user_id) DESC,  -- 1순위: 완료한 "유저 수"가 많은 순
@@ -46,5 +47,5 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
               LIMIT 1;                               -- 최종적으로 위 조건에 맞는 1건만 가져오기
               """,
       nativeQuery = true)
-  Long findMostCompletedMissionId();
+  Long findMostCompletedMissionId(@Param("today") java.time.LocalDate today);
 }

@@ -259,7 +259,7 @@ public class MissionService {
   }
 
   /**
-   * 가장 많이 완료된 인기 미션 1건을 조회합니다.
+   * 오늘 날짜의 미션들 중에서 가장 많이 완료된 인기 미션 1건을 조회합니다.
    *
    * <p>동작 순서:
    *
@@ -273,7 +273,9 @@ public class MissionService {
    * @throws CustomException 완료 이력이 없거나 미션이 존재하지 않는 경우
    */
   public MissionResponse getPopularMission() {
-    Long topId = missionRepository.findMostCompletedMissionId();
+    java.time.LocalDate todayKST = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+
+    Long topId = missionRepository.findMostCompletedMissionId(todayKST);
     if (topId == null) {
       throw new CustomException(MissionErrorCode.POPULAR_MISSION_NOT_FOUND);
     }

@@ -10,7 +10,8 @@ import com.likelion.danchu.domain.store.entity.Store;
 @Component
 public class MissionMapper {
 
-  public Mission toEntity(Store store, MissionRequest missionRequest, String rewardImageUrl) {
+  public Mission toEntity(
+      Store store, MissionRequest.CreateRequest missionRequest, String rewardImageUrl) {
     return Mission.builder()
         .store(store)
         .title(missionRequest.getTitle())

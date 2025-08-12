@@ -51,4 +51,8 @@ public class Mission extends BaseTimeEntity {
 
   @Column(name = "reward_image_url", nullable = true)
   private String rewardImageUrl;
+
+  public void changeDate(LocalDate newDate) {
+    this.date = newDate;
+  }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -48,12 +49,14 @@ public class MissionController {
               - date: **yyyy-MM-dd**
               - image: 선택
               """)
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<BaseResponse<MissionResponse>> createMission(
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
           @RequestPart("missionRequest")
           @Valid
-          MissionRequest missionRequest,
+          MissionRequest.CreateRequest missionRequest,
       @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
           @RequestPart(value = "image", required = false)
           MultipartFile imageFile) {
@@ -114,5 +117,25 @@ public class MissionController {
   public ResponseEntity<BaseResponse<MissionResponse>> getPopularMission() {
     MissionResponse missionResponse = missionService.getPopularMission();
     return ResponseEntity.ok(BaseResponse.success("인기 미션 조회에 성공했습니다.", missionResponse));
+  }
+
+  @Operation(
+      summary = "미션 날짜 변경",
+      description =
+          """
+          특정 미션의 진행 날짜를 변경합니다.
+          - 날짜 형식: **yyyy-MM-dd**
+          - 오늘 또는 미래 날짜만 허용
+          - 같은 가게/제목 조합에서 동일 날짜가 이미 존재하면 409(CONFLICT)
+          """)
+  @PutMapping(
+      path = "/date",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<MissionResponse>> updateMissionDate(
+      @Valid @RequestBody MissionRequest.DateUpdateRequest request) {
+
+    MissionResponse response = missionService.updateMissionDate(request);
+    return ResponseEntity.ok(BaseResponse.success("미션 날짜 변경에 성공했습니다.", response));
   }
 }

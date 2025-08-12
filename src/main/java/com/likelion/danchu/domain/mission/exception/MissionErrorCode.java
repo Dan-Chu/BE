@@ -19,7 +19,9 @@ public enum MissionErrorCode implements BaseErrorCode {
   INVALID_AUTH_CODE("MISSION_0005", "올바르지 않은 인증코드입니다.", HttpStatus.BAD_REQUEST),
   MISSION_STORE_MISMATCH("MISSION_0006", "미션의 가게와 인증코드가 일치하지 않습니다.", HttpStatus.FORBIDDEN),
   ALREADY_COMPLETED("MISSION_0007", "이미 완료한 미션입니다.", HttpStatus.CONFLICT),
-  POPULAR_MISSION_NOT_FOUND("MISSION_0008", "완료된 미션 기록이 없습니다.", HttpStatus.NOT_FOUND);
+  POPULAR_MISSION_NOT_FOUND("MISSION_0008", "완료된 미션 기록이 없습니다.", HttpStatus.NOT_FOUND),
+  MISSION_DATE_CHANGE_FORBIDDEN(
+      "MISSION_0009", "완료 이력이 있는 미션은 날짜를 변경할 수 없습니다.", HttpStatus.CONFLICT);
 
   private final String code;
   private final String message;

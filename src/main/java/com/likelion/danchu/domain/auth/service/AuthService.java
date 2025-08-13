@@ -25,7 +25,7 @@ import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.domain.user.service.UserService;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.jwt.JwtProvider;
-import com.likelion.danchu.global.redis.RedisUtil;
+import com.likelion.danchu.infra.redis.RedisUtil;
 
 import lombok.RequiredArgsConstructor;
 

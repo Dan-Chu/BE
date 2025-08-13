@@ -15,8 +15,8 @@ import com.likelion.danchu.domain.menu.repository.MenuRepository;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
 import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.s3.entity.PathName;
-import com.likelion.danchu.global.s3.service.S3Service;
+import com.likelion.danchu.infra.s3.entity.PathName;
+import com.likelion.danchu.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 

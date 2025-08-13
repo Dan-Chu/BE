@@ -23,7 +23,7 @@ import com.likelion.danchu.domain.user.exception.UserErrorCode;
 import com.likelion.danchu.domain.user.repository.UserHashtagRepository;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.openAI.OpenAIUtil;
+import com.likelion.danchu.infra.openAI.OpenAIUtil;
 import com.likelion.danchu.global.security.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;

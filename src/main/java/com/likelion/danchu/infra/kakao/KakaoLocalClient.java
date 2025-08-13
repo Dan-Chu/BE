@@ -1,4 +1,4 @@
-package com.likelion.danchu.external.kakao;
+package com.likelion.danchu.infra.kakao;
 
 import java.util.Optional;
 

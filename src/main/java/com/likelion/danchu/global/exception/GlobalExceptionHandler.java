@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.likelion.danchu.global.exception.model.BaseErrorCode;
 import com.likelion.danchu.global.response.BaseResponse;
-import com.likelion.danchu.global.s3.exception.S3ErrorCode;
+import com.likelion.danchu.infra.s3.exception.S3ErrorCode;
 
 import lombok.extern.slf4j.Slf4j;
 

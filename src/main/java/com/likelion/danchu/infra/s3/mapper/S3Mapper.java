@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.mapper;
+package com.likelion.danchu.infra.s3.mapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.likelion.danchu.global.config.S3Config;
-import com.likelion.danchu.global.s3.dto.S3Response;
+import com.likelion.danchu.infra.s3.S3Config;
+import com.likelion.danchu.infra.s3.dto.S3Response;
 
 import lombok.RequiredArgsConstructor;
 

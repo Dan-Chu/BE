@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.service;
+package com.likelion.danchu.infra.s3.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,12 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import com.likelion.danchu.global.config.S3Config;
 import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.s3.dto.S3Response;
-import com.likelion.danchu.global.s3.entity.PathName;
-import com.likelion.danchu.global.s3.exception.S3ErrorCode;
-import com.likelion.danchu.global.s3.mapper.S3Mapper;
+import com.likelion.danchu.infra.s3.S3Config;
+import com.likelion.danchu.infra.s3.dto.S3Response;
+import com.likelion.danchu.infra.s3.entity.PathName;
+import com.likelion.danchu.infra.s3.exception.S3ErrorCode;
+import com.likelion.danchu.infra.s3.mapper.S3Mapper;
 
 import lombok.RequiredArgsConstructor;
 

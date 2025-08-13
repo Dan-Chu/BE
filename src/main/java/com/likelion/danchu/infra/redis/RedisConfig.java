@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.config;
+package com.likelion.danchu.infra.redis;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

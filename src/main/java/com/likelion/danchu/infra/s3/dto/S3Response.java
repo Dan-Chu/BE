@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.dto;
+package com.likelion.danchu.infra.s3.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

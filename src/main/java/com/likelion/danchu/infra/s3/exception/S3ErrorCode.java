@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.exception;
+package com.likelion.danchu.infra.s3.exception;
 
 import org.springframework.http.HttpStatus;
 

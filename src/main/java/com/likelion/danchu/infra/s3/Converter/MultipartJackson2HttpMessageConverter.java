@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.Converter;
+package com.likelion.danchu.infra.s3.Converter;
 
 import java.lang.reflect.Type;
 

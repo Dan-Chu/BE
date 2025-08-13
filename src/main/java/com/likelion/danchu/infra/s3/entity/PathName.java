@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.entity;
+package com.likelion.danchu.infra.s3.entity;
 
 public enum PathName {
   USER,

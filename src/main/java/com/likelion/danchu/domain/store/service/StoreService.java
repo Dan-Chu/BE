@@ -17,6 +17,7 @@ import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.entity.StoreHashtag;
@@ -24,6 +25,7 @@ import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.mapper.StoreMapper;
 import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
+import com.likelion.danchu.external.kakao.KakaoLocalClient;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
@@ -41,6 +43,7 @@ public class StoreService {
   private final HashtagRepository hashtagRepository;
   private final StoreHashtagRepository storeHashtagRepository;
   private final HashtagMapper hashtagMapper;
+  private final KakaoLocalClient kakaoLocalClient;
 
   /**
    * 새로운 가게를 생성합니다.
@@ -69,11 +72,33 @@ public class StoreService {
       throw new CustomException(StoreErrorCode.IMAGE_UPLOAD_FAILED);
     }
 
-    Store store = storeMapper.toEntity(storeRequest, imageUrl);
+    // 항상 주소를 좌표 변환
+    var coords =
+        kakaoLocalClient
+            .geocode(storeRequest.getAddress())
+            .orElseThrow(() -> new CustomException(StoreErrorCode.GEOCODING_FAILED));
+    double lon = coords.lon(); // 경도
+    double lat = coords.lat(); // 위도
+
+    // 저장
     try {
+      Store store =
+          Store.builder()
+              .name(storeRequest.getName())
+              .address(storeRequest.getAddress())
+              .description(storeRequest.getDescription())
+              .phoneNumber(storeRequest.getPhoneNumber())
+              .openTime(storeRequest.getOpenTime())
+              .closeTime(storeRequest.getCloseTime())
+              .authCode(storeRequest.getAuthCode())
+              .mainImageUrl(imageUrl)
+              .stampReward(storeRequest.getStampReward())
+              .latitude(lat)
+              .longitude(lon)
+              .build();
+
       Store saved = storeRepository.save(store);
-      // 생성 직후엔 해시태그가 없으니 빈 배열로 반환
-      return storeMapper.toResponse(saved, List.of());
+      return storeMapper.toResponse(saved, List.of()); // 생성 직후 해시태그 없음
     } catch (Exception e) {
       throw new CustomException(StoreErrorCode.STORE_SAVE_FAILED);
     }
@@ -187,5 +212,84 @@ public class StoreService {
         relations.stream().map(StoreHashtag::getHashtag).map(hashtagMapper::toResponse).toList();
 
     return storeMapper.toResponse(store, hashtagResponses);
+  }
+
+  /**
+   * 현재 위치(:lat, :lng)를 기준으로 거리순으로 정렬된 가게 목록을 페이징 조회합니다.
+   *
+   * @param lat 사용자 위도(WGS84)
+   * @param lng 사용자 경도(WGS84)
+   * @param page 0부터 시작하는 페이지 번호
+   * @param size 페이지 크기(1 이상)
+   * @param radiusMeters 검색 반경(미터). null이면 반경 제한 없음
+   * @return 거리 정보가 포함된 페이징 응답
+   */
+  public PageableResponse<StoreDistanceResponse> getNearbyStores(
+      double lat, double lng, int page, int size, Double radiusMeters) {
+
+    PageRequest pageable = PageRequest.of(page, size);
+    Page<StoreRepository.StoreWithDistanceProjection> projPage =
+        storeRepository.findNearby(lat, lng, radiusMeters, pageable);
+
+    // 현재 페이지 가게들의 해시태그를 한 번에 조회
+    Map<Long, List<HashtagResponse>> hashtagsByStoreId =
+        projPage.getContent().isEmpty()
+            ? Map.of()
+            : loadHashtagsByStoreIds(
+                projPage.getContent().stream()
+                    .map(p -> Store.builder().id(p.getId()).build())
+                    .toList());
+
+    Page<StoreDistanceResponse> mapped =
+        projPage.map(
+            p -> {
+              // Projection -> Store -> StoreResponse
+              Store store =
+                  Store.builder()
+                      .id(p.getId())
+                      .name(p.getName())
+                      .address(p.getAddress())
+                      .description(p.getDescription())
+                      .phoneNumber(p.getPhone_Number())
+                      .openTime(p.getOpen_Time())
+                      .closeTime(p.getClose_Time())
+                      .mainImageUrl(p.getMain_Image_Url())
+                      .latitude(p.getLatitude())
+                      .longitude(p.getLongitude())
+                      .authCode("") // 응답 비노출
+                      .build();
+
+              StoreResponse storeRes =
+                  storeMapper.toResponse(
+                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+
+              double meters = p.getDistance_m();
+              return StoreDistanceResponse.builder()
+                  .store(storeRes)
+                  .distanceMeters(Math.round(meters * 10d) / 10d) // 소수점 1자리
+                  .distanceKm(Math.round((meters / 1000d) * 100d) / 100d) // 소수점 2자리
+                  .build();
+            });
+
+    return PageableResponse.from(mapped);
+  }
+
+  /**
+   * 현재 페이지에 포함된 가게들의 해시태그를 한 번에 로드해 N+1 쿼리를 방지합니다. *
+   *
+   * @param stores 해시태그를 조회할 가게 목록(비-null)
+   * @return 가게 ID -> 해시태그 응답 리스트 매핑
+   */
+  private Map<Long, List<HashtagResponse>> loadHashtagsByStoreIds(List<Store> stores) {
+    List<Long> storeIds = stores.stream().map(Store::getId).toList();
+    List<StoreHashtag> relations =
+        storeIds.isEmpty() ? List.of() : storeHashtagRepository.findByStore_IdIn(storeIds);
+
+    return relations.stream()
+        .collect(
+            Collectors.groupingBy(
+                r -> r.getStore().getId(),
+                Collectors.mapping(
+                    r -> hashtagMapper.toResponse(r.getHashtag()), Collectors.toList())));
   }
 }

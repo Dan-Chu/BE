@@ -18,7 +18,9 @@ public enum StoreErrorCode implements BaseErrorCode {
   STORE_AUTHCODE_DUPLICATED("STORE_0004", "이미 사용 중인 인증 코드입니다.", HttpStatus.CONFLICT),
   EMPTY_KEYWORD("STORE_0005", "검색 키워드는 비어 있을 수 없습니다.", HttpStatus.BAD_REQUEST),
   STORE_NOT_FOUND("STORE_0006", "해당 가게를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-  EMPTY_HASHTAG_LIST("STORE_0007", "선택된 해시태그가 없습니다.", HttpStatus.BAD_REQUEST);
+  EMPTY_HASHTAG_LIST("STORE_0007", "선택된 해시태그가 없습니다.", HttpStatus.BAD_REQUEST),
+  GEOCODING_FAILED("STORE_0008", "주소로 좌표를 찾지 못했습니다.", HttpStatus.BAD_REQUEST),
+  LOCAL_API_DISABLED("STORE_0009", "카카오 로컬 서비스가 비활성화되었습니다.", HttpStatus.FORBIDDEN);
 
   private final String code;
   private final String message;

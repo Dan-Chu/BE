@@ -23,9 +23,9 @@ import com.likelion.danchu.domain.user.entity.User;
 import com.likelion.danchu.domain.user.exception.UserErrorCode;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.global.security.SecurityUtil;
 import com.likelion.danchu.infra.s3.entity.PathName;
 import com.likelion.danchu.infra.s3.service.S3Service;
-import com.likelion.danchu.global.security.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 

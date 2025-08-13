@@ -28,8 +28,8 @@ import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.mapper.StoreMapper;
 import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
-import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.infra.s3.entity.PathName;
 import com.likelion.danchu.infra.s3.service.S3Service;
 

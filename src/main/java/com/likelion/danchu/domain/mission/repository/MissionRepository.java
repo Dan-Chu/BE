@@ -14,7 +14,7 @@ import com.likelion.danchu.domain.mission.entity.Mission;
 public interface MissionRepository extends JpaRepository<Mission, Long> {
 
   // 지정한 가게, 날짜, 제목이 모두 일치하는 미션이 존재하는지 확인
-  boolean existsByStoreIdAndDateAndTitle(Long storeId, LocalDate date, String title);
+  boolean existsByStore_IdAndDateAndTitle(Long storeId, LocalDate date, String title);
 
   // 오늘 날짜 미션 중 해당 유저가 아직 완료 안한 미션만
   @Query(
@@ -50,7 +50,7 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
   Long findMostCompletedMissionId(@Param("today") java.time.LocalDate today);
 
   // 동일 가게/제목/날짜 조합과 같은 다른 미션 존재 여부 확인(자기 자신 id 제외) — 날짜 변경 시 중복 검사용
-  boolean existsByStoreIdAndDateAndTitleAndIdNot(
+  boolean existsByStore_IdAndDateAndTitleAndIdNot(
       Long storeId, LocalDate date, String title, Long id);
 
   // 특정 미션의 완료 이력(조인 테이블) 건수를 반환 (0보다 크면 완료 이력 존재)

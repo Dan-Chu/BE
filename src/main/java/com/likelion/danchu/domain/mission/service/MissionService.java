@@ -59,7 +59,7 @@ public class MissionService {
 
     // 중복 미션 존재 여부 확인
     boolean exists =
-        missionRepository.existsByStoreIdAndDateAndTitle(
+        missionRepository.existsByStore_IdAndDateAndTitle(
             missionRequest.getStoreId(), missionRequest.getDate(), missionRequest.getTitle());
     if (exists) {
       throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);
@@ -251,7 +251,7 @@ public class MissionService {
 
     // 동일 가게+제목 조합에서 동일 날짜 충돌 검사
     final boolean duplicated =
-        missionRepository.existsByStoreIdAndDateAndTitleAndIdNot(
+        missionRepository.existsByStore_IdAndDateAndTitleAndIdNot(
             mission.getStore().getId(), request.getDate(), mission.getTitle(), mission.getId());
     if (duplicated) {
       throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);
@@ -283,7 +283,7 @@ public class MissionService {
 
     // 동일 가게+제목+요청 날짜 중복 금지
     boolean exists =
-        missionRepository.existsByStoreIdAndDateAndTitle(
+        missionRepository.existsByStore_IdAndDateAndTitle(
             src.getStore().getId(), request.getDate(), src.getTitle());
     if (exists) {
       throw new CustomException(MissionErrorCode.DUPLICATE_MISSION);

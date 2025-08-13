@@ -32,6 +32,7 @@ public class MissionMapper {
         .reward(mission.getReward())
         .date(mission.getDate())
         .rewardImageUrl(mission.getRewardImageUrl())
+        .storeAuthCode(mission.getStore().getAuthCode())
         .build();
   }
 

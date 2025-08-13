@@ -58,4 +58,21 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
       value = "SELECT COUNT(*) FROM user_completed_mission WHERE mission_id = :missionId",
       nativeQuery = true)
   long countCompletionsByMissionId(@Param("missionId") Long missionId);
+
+  // 미션과 가게를 한 번에 로드 (N+1 방지)
+  @Query("SELECT m FROM Mission m JOIN FETCH m.store")
+  List<Mission> findAllWithStore();
+
+  // 특정 미션 ID 목록에 대해 각 미션의 완료한 사용자 수를 집계하여 반환
+  @Query(
+      value =
+          """
+      SELECT m.id AS missionId, COUNT(ucm.user_id) AS cnt
+      FROM mission m
+      LEFT JOIN user_completed_mission ucm ON ucm.mission_id = m.id
+      WHERE m.id IN (:missionIds)
+      GROUP BY m.id
+      """,
+      nativeQuery = true)
+  List<Object[]> findCompleteCountsByMissionIds(@Param("missionIds") List<Long> missionIds);
 }

@@ -28,7 +28,6 @@ import com.likelion.danchu.domain.user.mapper.UserMapper;
 import com.likelion.danchu.domain.user.repository.UserHashtagRepository;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.redis.RedisUtil;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
 import com.likelion.danchu.global.security.SecurityUtil;
@@ -50,7 +49,6 @@ public class UserService {
   private final UserHashtagRepository userHashtagRepository;
   private final CouponRepository couponRepository;
   private final StampRepository stampRepository;
-  private final RedisUtil redisUtil;
 
   /**
    * 회원가입을 처리하는 메서드
@@ -96,10 +94,7 @@ public class UserService {
       throw new CustomException(UserErrorCode.USER_SAVE_FAILED);
     }
 
-    String redisKey = "user:completedMission:" + user.getId();
-    redisUtil.setData(redisKey, "0");
-
-    return userMapper.toResponse(user, getCompletedMission(user.getId()), null);
+    return userMapper.toResponse(user, 0, null);
   }
 
   /**
@@ -257,30 +252,18 @@ public class UserService {
     return userHashtagRepository.findAllByUser(user).stream().map(UserHashtag::getHashtag).toList();
   }
 
-  // Lazy Loading: Redis에 없으면 → DB에서 조회하고 → Redis에 저장
   public long getCompletedMission(Long userId) {
-    String redisKey = "user:completedMission:" + userId;
-
-    if (redisUtil.existData(redisKey)) {
-      return redisUtil.getLongValue(redisKey);
+    if (!userRepository.existsById(userId)) {
+      throw new CustomException(UserErrorCode.USER_NOT_FOUND);
     }
-
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-    long count = user.getCompletedMission();
-
-    redisUtil.setData(redisKey, String.valueOf(count));
-
-    return count;
+    return userRepository.countCompletedMissions(userId);
   }
 
   /**
    * 회원 탈퇴(하드 삭제): S3/DB/Redis의 사용자 관련 자원을 모두 정리합니다.
    *
    * <p>순서: 1) S3 이미지 삭제 (사용자 프로필 + 사용자의 모든 쿠폰 이미지) 2) DB 자원 삭제 (userHashtag → stamp → coupon →
-   * user) 3) Redis 키 삭제 (completedMission 캐시)
+   * user)
    *
    * @throws CustomException 사용자 없음 {@link UserErrorCode#USER_NOT_FOUND}
    * @throws CustomException S3 삭제 실패 {@link UserErrorCode#S3_DELETE_FAILED}
@@ -316,8 +299,5 @@ public class UserService {
     } catch (RuntimeException e) {
       throw new CustomException(UserErrorCode.USER_DELETE_FAILED);
     }
-
-    // 3) Redis 캐시 삭제 (completedMission)
-    redisUtil.deleteData("user:completedMission:" + userId);
   }
 }

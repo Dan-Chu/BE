@@ -47,29 +47,44 @@ public class StoreHashtagService {
    * @throws CustomException 해시태그 길이가 유효하지 않거나, 가게를 찾을 수 없거나, 이미 해당 가게에 동일한 해시태그가 연결된 경우
    */
   public HashtagResponse createHashtagForStore(Long storeId, HashtagRequest request) {
+    final int MAX_HASHTAGS_PER_STORE = 4;
+
     String name = request.toFormattedName();
     if (name.length() < 2 || name.length() > 11) {
       throw new CustomException(HashtagErrorCode.HASHTAG_LENGTH_INVALID);
     }
 
-    // 이미 존재하는 해시태그면 재사용, 없으면 새로 생성
+    // 사전 개수 검증: 이미 4개면 차단
+    long current = storeHashtagRepository.countByStore_Id(storeId);
+    if (current >= MAX_HASHTAGS_PER_STORE) {
+      throw new CustomException(HashtagErrorCode.HASHTAG_LIMIT_EXCEEDED);
+    }
+
+    // 해시태그 재사용 or 생성
     Hashtag hashtag =
         hashtagRepository
             .findByName(name)
             .orElseGet(() -> hashtagRepository.save(Hashtag.builder().name(name).build()));
 
-    // storeId로 가게 조회
+    // 가게 조회
     Store store =
         storeRepository
             .findById(storeId)
             .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
 
-    // 해당 가게에 이미 동일 해시태그가 연결되어 있는지 확인
+    // 중복 연결 방지
     if (storeHashtagRepository.existsByStoreAndHashtag(store, hashtag)) {
       throw new CustomException(HashtagErrorCode.HASHTAG_ALREADY_EXISTS);
     }
 
+    // 저장
     storeHashtagRepository.save(StoreHashtag.builder().store(store).hashtag(hashtag).build());
+
+    // 사후 재검증(동시성 대비): 초과 시 롤백
+    long after = storeHashtagRepository.countByStore_Id(storeId);
+    if (after > MAX_HASHTAGS_PER_STORE) {
+      throw new CustomException(HashtagErrorCode.HASHTAG_LIMIT_EXCEEDED);
+    }
 
     return hashtagMapper.toResponse(hashtag);
   }

@@ -27,9 +27,12 @@ public interface StoreHashtagRepository extends JpaRepository<StoreHashtag, Long
 
   @Query(
       """
-    select sh from StoreHashtag sh
-      join fetch sh.store s
-      join fetch sh.hashtag h
-  """)
+            select sh from StoreHashtag sh
+              join fetch sh.store s
+              join fetch sh.hashtag h
+          """)
   List<StoreHashtag> findAllWithStoreAndHashtag();
+
+  // 해당 가게에 등록된 해시태그 개수 반환
+  long countByStore_Id(Long storeId);
 }

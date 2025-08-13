@@ -36,4 +36,7 @@ public class MissionResponse {
       description = "보상 이미지 URL",
       example = "https://s3.amazonaws.com/bucket/missions/reward.jpg")
   private String rewardImageUrl;
+
+  @Schema(description = "가게 인증 코드 (숫자 4자리)", example = "0123")
+  private String storeAuthCode;
 }

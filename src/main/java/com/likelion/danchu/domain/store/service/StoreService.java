@@ -15,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
+import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
+import com.likelion.danchu.domain.menu.mapper.MenuMapper;
+import com.likelion.danchu.domain.menu.repository.MenuRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
@@ -44,6 +47,8 @@ public class StoreService {
   private final StoreHashtagRepository storeHashtagRepository;
   private final HashtagMapper hashtagMapper;
   private final KakaoLocalClient kakaoLocalClient;
+  private final MenuRepository menuRepository;
+  private final MenuMapper menuMapper;
 
   /**
    * 새로운 가게를 생성합니다.
@@ -194,7 +199,7 @@ public class StoreService {
   }
 
   /**
-   * 특정 가게의 상세 정보를 조회합니다. 해당 가게의 해시태그를 함께 반환합니다.
+   * 특정 가게의 상세 정보를 조회합니다. 해당 가게의 해시태그와 메뉴 목록을 함께 반환합니다.
    *
    * @param storeId 조회할 가게 ID
    * @return 가게 상세 정보 응답
@@ -211,7 +216,14 @@ public class StoreService {
     List<HashtagResponse> hashtagResponses =
         relations.stream().map(StoreHashtag::getHashtag).map(hashtagMapper::toResponse).toList();
 
-    return storeMapper.toResponse(store, hashtagResponses);
+    // 가게 메뉴 목록 조회
+    List<MenuResponse> menuResponses =
+        menuRepository.findByStore_IdOrderByIdAsc(storeId).stream()
+            .map(menuMapper::toResponse)
+            .toList();
+
+    // 해시태그 + 메뉴 포함하여 응답 생성
+    return storeMapper.toResponse(store, hashtagResponses, menuResponses);
   }
 
   /**

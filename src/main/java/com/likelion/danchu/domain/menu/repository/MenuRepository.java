@@ -15,4 +15,7 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
 
   // 특정 가게(storeId)의 메뉴 전체를 ID 오름차순으로 조회
   List<Menu> findByStore_IdOrderByIdAsc(Long storeId);
+
+  // 여러 가게(storeIds)의 메뉴를 한 번에 조회 (N+1 방지용)
+  List<Menu> findByStore_IdInOrderByIdAsc(List<Long> storeIds);
 }

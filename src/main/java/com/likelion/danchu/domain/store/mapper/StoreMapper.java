@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
@@ -30,7 +31,8 @@ public class StoreMapper {
         .build();
   }
 
-  public StoreResponse toResponse(Store store, List<HashtagResponse> hashtags) {
+  public StoreResponse toResponse(
+      Store store, List<HashtagResponse> hashtags, List<MenuResponse> menus) {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
     LocalTime open = LocalTime.parse(store.getOpenTime(), formatter);
@@ -59,10 +61,15 @@ public class StoreMapper {
         .mainImageUrl(store.getMainImageUrl())
         .hashtags(hashtags != null ? hashtags : List.of()) // null 방어
         .isOpen(isOpen)
+        .menus(menus != null ? menus : List.of())
         .build();
   }
 
+  public StoreResponse toResponse(Store store, List<HashtagResponse> hashtags) {
+    return toResponse(store, hashtags, List.of());
+  }
+
   public StoreResponse toResponse(Store store) {
-    return toResponse(store, List.of());
+    return toResponse(store, List.of(), List.of());
   }
 }

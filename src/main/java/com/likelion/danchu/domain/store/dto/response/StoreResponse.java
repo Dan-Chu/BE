@@ -3,6 +3,7 @@ package com.likelion.danchu.domain.store.dto.response;
 import java.util.List;
 
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
+import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -42,4 +43,7 @@ public class StoreResponse {
 
   @Schema(description = "현재 영업 여부", example = "true")
   private boolean isOpen;
+
+  @Schema(description = "가게 메뉴 목록")
+  private List<MenuResponse> menus;
 }

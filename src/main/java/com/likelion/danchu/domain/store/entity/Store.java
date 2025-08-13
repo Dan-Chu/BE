@@ -53,4 +53,10 @@ public class Store extends BaseTimeEntity {
 
   @Column(name = "stamp_reward", nullable = true)
   private String stampReward;
+
+  @Column(name = "latitude", nullable = false) // 위도
+  private Double latitude;
+
+  @Column(name = "longitude", nullable = false) // 경도
+  private Double longitude;
 }

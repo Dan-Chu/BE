@@ -21,6 +21,7 @@ import com.likelion.danchu.domain.hashtag.dto.request.HashtagRequest;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.service.StoreHashtagService;
@@ -48,6 +49,7 @@ public class StoreController {
       description =
           """
               새로운 가게 정보를 등록합니다.
+              - 실제 도로명 주소를 입력해야 주소가 위도/경도로 변환됩니다.
 
               ✅ 필수 입력값:
               - 가게 이름: **1자 이상, 10자 이내**
@@ -164,5 +166,39 @@ public class StoreController {
     PageableResponse<StoreResponse> result =
         storeHashtagService.filterStoresByHashtags(tags, page, size);
     return ResponseEntity.ok(BaseResponse.success("가게 해시태그 필터 조회 성공했습니다.", result));
+  }
+
+  @Operation(
+      summary = "현재 위치 기준, 거리순 가게 페이징 조회",
+      description =
+          """
+              사용자 좌표(lat, lng)를 기준으로 가까운 순으로 가게를 페이징 조회합니다.
+
+              ✅ 기본 단위
+              - distanceMeters: 미터(m)
+              - distanceKm: 킬로미터(km)
+
+              ✅ radius(옵션)
+              - 단위: 미터(m)
+              - 예: radius=3000 → 3km 이내만 조회
+              """)
+  @GetMapping("/nearby")
+  public ResponseEntity<BaseResponse<PageableResponse<StoreDistanceResponse>>> getNearbyStores(
+      @Parameter(description = "사용자 현재 위도", required = true, example = "37.4881292540693")
+          @RequestParam
+          double lat,
+      @Parameter(description = "사용자 현재 경도", required = true, example = "127.111066039437")
+          @RequestParam
+          double lng,
+      @Parameter(description = "페이지 번호(0부터)", example = "0") @RequestParam(defaultValue = "0")
+          int page,
+      @Parameter(description = "페이지 크기", example = "3") @RequestParam(defaultValue = "3") int size,
+      @Parameter(description = "검색 반경(미터), 미입력 시 제한 없음") @RequestParam(required = false)
+          Double radius) {
+
+    PageableResponse<StoreDistanceResponse> result =
+        storeService.getNearbyStores(lat, lng, page, size, radius);
+
+    return ResponseEntity.ok(BaseResponse.success("현재 위치 기준 거리순 가게 조회에 성공했습니다.", result));
   }
 }

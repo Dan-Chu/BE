@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +17,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "StoreRequest DTO", description = "가게 관련 요청")
+@JsonPropertyOrder({
+  "name",
+  "address",
+  "description",
+  "phoneNumber",
+  "openTime",
+  "closeTime",
+  "authCode",
+  "stampReward"
+})
 public class StoreRequest {
 
   @NotBlank(message = "가게 이름은 필수입니다.")

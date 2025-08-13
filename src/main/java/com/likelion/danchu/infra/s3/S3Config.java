@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.config;
+package com.likelion.danchu.infra.s3;
 
 import jakarta.annotation.PostConstruct;
 

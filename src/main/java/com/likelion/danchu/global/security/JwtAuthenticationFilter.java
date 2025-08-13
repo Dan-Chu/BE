@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.likelion.danchu.global.jwt.JwtProvider;
-import com.likelion.danchu.global.redis.RedisUtil;
+import com.likelion.danchu.infra.redis.RedisUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

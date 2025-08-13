@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.s3.controller;
+package com.likelion.danchu.infra.s3.controller;
 
 import java.util.List;
 
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.likelion.danchu.global.response.BaseResponse;
-import com.likelion.danchu.global.s3.dto.S3Response;
-import com.likelion.danchu.global.s3.entity.PathName;
-import com.likelion.danchu.global.s3.service.S3Service;
+import com.likelion.danchu.infra.s3.dto.S3Response;
+import com.likelion.danchu.infra.s3.entity.PathName;
+import com.likelion.danchu.infra.s3.service.S3Service;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

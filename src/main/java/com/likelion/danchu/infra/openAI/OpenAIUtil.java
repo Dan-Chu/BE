@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.openAI;
+package com.likelion.danchu.infra.openAI;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.config;
+package com.likelion.danchu.infra.openAI;
 
 import java.util.List;
 
@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-
-import com.likelion.danchu.global.openAI.OpenAIUtil;
 
 @Configuration
 public class OpenAIConfig {

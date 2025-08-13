@@ -1,4 +1,4 @@
-package com.likelion.danchu.global.redis;
+package com.likelion.danchu.infra.redis;
 
 import java.time.Duration;
 

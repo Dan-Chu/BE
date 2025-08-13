@@ -1,5 +1,7 @@
 package com.likelion.danchu.domain.menu.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,5 +65,25 @@ public class MenuService {
 
     Menu saved = menuRepository.save(menuMapper.toEntity(request, store, uploadedUrl));
     return menuMapper.toResponse(saved);
+  }
+
+  /**
+   * 가게의 메뉴 전체 목록 조회
+   *
+   * @param storeId 대상 가게 ID
+   * @return {@link MenuResponse} 리스트 (가격은 price, priceFormatted 동시 제공)
+   * @throws CustomException {@code STORE_NOT_FOUND} - 가게 미존재 시
+   */
+  @Transactional
+  public List<MenuResponse> getMenus(Long storeId) {
+    // 가게 존재 확인
+    if (!storeRepository.existsById(storeId)) {
+      throw new CustomException(
+          com.likelion.danchu.domain.store.exception.StoreErrorCode.STORE_NOT_FOUND);
+    }
+    // id 오름차순 정렬로 전체 반환
+    return menuRepository.findByStore_IdOrderByIdAsc(storeId).stream()
+        .map(menuMapper::toResponse) // priceFormatted 포함됨
+        .toList();
   }
 }

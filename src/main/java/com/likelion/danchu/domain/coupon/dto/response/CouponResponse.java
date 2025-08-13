@@ -27,4 +27,7 @@ public class CouponResponse {
 
   @Schema(description = "사용 기한", example = "2025-12-25")
   private LocalDate expirationDate;
+
+  @Schema(description = "쿠폰 사용을 위한 인증번호", example = "0000")
+  private String authCode;
 }

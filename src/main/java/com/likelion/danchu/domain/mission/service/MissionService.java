@@ -23,7 +23,6 @@ import com.likelion.danchu.domain.user.entity.User;
 import com.likelion.danchu.domain.user.exception.UserErrorCode;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
-import com.likelion.danchu.global.redis.RedisUtil;
 import com.likelion.danchu.global.s3.entity.PathName;
 import com.likelion.danchu.global.s3.service.S3Service;
 import com.likelion.danchu.global.security.SecurityUtil;
@@ -40,7 +39,6 @@ public class MissionService {
   private final MissionRepository missionRepository;
   private final MissionMapper missionMapper;
   private final UserRepository userRepository;
-  private final RedisUtil redisUtil;
   private final CouponService couponService;
 
   /**
@@ -104,7 +102,6 @@ public class MissionService {
    *
    * <ul>
    *   <li>유저의 완료 미션 ID 리스트에 {@code missionId} 추가 (이미 있으면 무시)
-   *   <li>새로 추가된 경우에만 완료 카운트 증가 및 Redis 동기화
    * </ul>
    *
    * @param userId 완료 처리하는 사용자 ID
@@ -128,38 +125,6 @@ public class MissionService {
     if (!added) {
       // 이미 완료한 미션이면 아무 작업도 하지 않음 (멱등성 보장)
       return;
-    }
-
-    // 카운트/Redis 증가 로직
-    increaseCompletedMission(userId);
-  }
-
-  /**
-   * 사용자 완료 미션 카운트를 증가시키고 Redis 값도 동기화
-   *
-   * @param userId 완료 카운트를 증가시킬 사용자 ID
-   * @throws CustomException 사용자 미존재 시 예외 발생
-   */
-  public void increaseCompletedMission(Long userId) {
-    String redisKey = "user:completedMission:" + userId;
-
-    // 1. DB에서 유저 조회
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
-    // 2. 엔티티 값 증가
-    user.increaseCompletedMission();
-
-    // 3. Redis 값 증가/초기화
-    if (redisUtil.existData(redisKey)) {
-      // Redis 값이 있으면 바로 +1
-      long newValue = redisUtil.getLongValue(redisKey) + 1;
-      redisUtil.setData(redisKey, String.valueOf(newValue));
-    } else {
-      // Redis에 없으면 DB값을 그대로 넣음
-      redisUtil.setData(redisKey, String.valueOf(user.getCompletedMission()));
     }
   }
 
@@ -220,9 +185,6 @@ public class MissionService {
     // 5) 쿠폰 발급
     CouponResponse coupon = couponService.createCouponFromMission(missionId, userId);
 
-    // 6) Redis 카운트 동기화 (엔티티 값 기준으로 세팅)
-    syncCompletedCountToRedis(userId);
-
     return coupon;
   }
 
@@ -244,19 +206,6 @@ public class MissionService {
     if (!added) {
       throw new CustomException(MissionErrorCode.ALREADY_COMPLETED);
     }
-
-    // 카운트 증가 (엔티티)
-    user.increaseCompletedMission();
-  }
-
-  /** Redis 카운트를 User의 현재 completedMission 값으로 동기화 */
-  private void syncCompletedCountToRedis(Long userId) {
-    String key = "user:completedMission:" + userId;
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-    redisUtil.setData(key, String.valueOf(user.getCompletedMission()));
   }
 
   /**

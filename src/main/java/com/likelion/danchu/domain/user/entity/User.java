@@ -46,10 +46,6 @@ public class User extends BaseTimeEntity {
   @Column(name = "password", nullable = false)
   private String password;
 
-  @Builder.Default
-  @Column(name = "completed_mission", nullable = false)
-  private long completedMission = 0;
-
   @Column(name = "profile_image_url", nullable = true)
   private String profileImageUrl;
 
@@ -62,10 +58,6 @@ public class User extends BaseTimeEntity {
       uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "mission_id"}))
   @Column(name = "mission_id", nullable = false)
   private List<Long> completedMissionIds = new ArrayList<>();
-
-  public void increaseCompletedMission() {
-    this.completedMission++;
-  }
 
   // 중복 방지하면서 missionId 추가 (추가되면 true)
   public boolean addCompletedMissionId(Long missionId) {

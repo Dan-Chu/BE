@@ -20,7 +20,7 @@ public class StoreResponse {
   @Schema(description = "가게 이름", example = "동방손칼국수")
   private String name;
 
-  @Schema(description = "가게 주소", example = "서울 성북구 서경로 91 청구아파트제상가동 1층 105호")
+  @Schema(description = "가게 주소", example = "서울 성북구 서경로 91")
   private String address;
 
   @Schema(description = "가게 설명", example = "묵은지의 깊은 맛이 담긴 닭볶음탕")

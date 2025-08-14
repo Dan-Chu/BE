@@ -1,10 +1,10 @@
 services:
   app:
-    build: .  # 현재 디렉토리(Dockerfile이 있는 위치) 기준으로 Docker 이미지 빌드
+    image: ${DOCKER_USERNAME}/${DOCKER_REPO}:latest
     ports:
       - "8080:8080"  # 호스트의 8080 포트를 컨테이너의 8080 포트와 매핑
     environment:
-      - SPRING_PROFILES_ACTIVE=dev  # Spring Boot에서 사용할 profile을 dev로 설정
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}  # Spring Boot에서 사용할 profile을 dev로 설정
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}  # MySQL 컨테이너를 데이터베이스로 사용하도록 설정
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
@@ -36,6 +36,19 @@ services:
     networks:
       - danchu-network  # Spring과 같은 네트워크 상에 있어서 mysql이라는 호스트 이름으로 접근 가능
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - danchu-network
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -56,3 +69,4 @@ networks:
 
 volumes:
   mysql-data:  # 위에서 정의한 MySQL 데이터를 저장할 볼륨
+  redis-data:

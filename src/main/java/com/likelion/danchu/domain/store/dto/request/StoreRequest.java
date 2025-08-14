@@ -36,7 +36,7 @@ public class StoreRequest {
 
   @NotBlank(message = "주소는 필수입니다.")
   @Size(max = 50, message = "주소는 50자 이내여야 합니다.")
-  @Schema(description = "가게 주소", example = "서울 성북구 서경로 91 청구아파트제상가동 1층 105호")
+  @Schema(description = "가게 주소", example = "서울 성북구 서경로 91")
   private String address;
 
   @NotBlank(message = "가게 소개는 필수입니다.")

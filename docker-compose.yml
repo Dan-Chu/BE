@@ -2,46 +2,47 @@ services:
   app:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}:latest
     container_name: danchu
-    ports:
-      - "8080:8080"  # 호스트의 8080 포트를 컨테이너의 8080 포트와 매핑
+    expose:
+      - "8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}  # Spring Boot에서 사용할 profile을 dev로 설정
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}  # MySQL 컨테이너를 데이터베이스로 사용하도록 설정
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
     command: ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-jar","app.jar"]
-      # 실행 명령어: jar 파일을 실행하면서 Spring 프로필 활성화
     depends_on:
       mysql:
-        condition: service_healthy # 이 서비스가 mysql이 먼저 실행된 후 시작되도록
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - danchu-network  # mysql과 같은 네트워크를 공유
+      - danchu-network
+    restart: unless-stopped
 
   mysql:
-    image: mysql:8.0  # 공식 MySQL 8.0 이미지를 사용
+    image: mysql:8.0
     container_name: mysql
-    ports:
-      - "3306:3306"  # 호스트와 컨테이너의 MySQL 포트를 매핑
+    expose:
+      - "3306"
     environment:
-      - MYSQL_DATABASE=${MYSQL_DATABASE}  # 초기 생성될 데이터베이스 이름
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}  # 루트 계정의 비밀번호
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
-      # MySQL의 데이터 파일을 호스트에 볼륨으로 영구 저장
-      # 컨테이너가 삭제돼도 DB 내용은 유지됨
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - danchu-network  # Spring과 같은 네트워크 상에 있어서 mysql이라는 호스트 이름으로 접근 가능
+      - danchu-network
+    restart: unless-stopped
 
   redis:
     image: redis:latest
     container_name: redis
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -50,6 +51,7 @@ services:
       retries: 10
     networks:
       - danchu-network
+    restart: unless-stopped
 
   nginx:
     image: nginx:latest
@@ -60,11 +62,13 @@ services:
     volumes:
       - /home/ubuntu/nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 공유
+      - /home/ubuntu/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
       - app
       - dozzle
     networks:
       - danchu-network
+    restart: unless-stopped
 
   dozzle:
     image: amir20/dozzle:latest
@@ -80,5 +84,5 @@ networks:
     driver: bridge  # Docker 기본 브리지 네트워크를 사용
 
 volumes:
-  mysql-data:  # 위에서 정의한 MySQL 데이터를 저장할 볼륨
+  mysql-data:
   redis-data:

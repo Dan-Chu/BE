@@ -25,6 +25,8 @@ public class StampMapper {
         .currentCount(stamp.getCurrentCount())
         .cardNum(stamp.getCardNum())
         .status(stamp.getStatus())
+        .nickname(stamp.getUser().getNickname())
+        .authCode(stamp.getStore().getAuthCode())
         .build();
   }
 

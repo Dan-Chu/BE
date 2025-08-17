@@ -55,6 +55,10 @@ dependencies {
 
     // OpenAI
     implementation("org.apache.httpcomponents.client5:httpclient5")
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {

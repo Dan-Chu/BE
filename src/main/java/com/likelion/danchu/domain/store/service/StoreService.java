@@ -12,12 +12,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.coupon.repository.CouponRepository;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
 import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
 import com.likelion.danchu.domain.menu.mapper.MenuMapper;
 import com.likelion.danchu.domain.menu.repository.MenuRepository;
+import com.likelion.danchu.domain.mission.repository.MissionRepository;
+import com.likelion.danchu.domain.stamp.repository.StampRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
@@ -28,6 +31,7 @@ import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.mapper.StoreMapper;
 import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
+import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
 import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.infra.s3.entity.PathName;
@@ -49,6 +53,10 @@ public class StoreService {
   private final KakaoLocalClient kakaoLocalClient;
   private final MenuRepository menuRepository;
   private final MenuMapper menuMapper;
+  private final MissionRepository missionRepository;
+  private final UserRepository userRepository;
+  private final CouponRepository couponRepository;
+  private final StampRepository stampRepository;
 
   /**
    * 새로운 가게를 생성합니다.
@@ -303,5 +311,61 @@ public class StoreService {
                 r -> r.getStore().getId(),
                 Collectors.mapping(
                     r -> hashtagMapper.toResponse(r.getHashtag()), Collectors.toList())));
+  }
+
+  /**
+   * 가게 삭제
+   *
+   * <p>S3 같은 외부 시스템 실패 때문에 핵심 트랜잭션(DB 삭제)을 롤백시키지 않기 위해 이미지 삭제는 실패해도 진행
+   */
+  public void deleteStore(Long storeId) {
+    // 가게 조회
+    Store store =
+        storeRepository
+            .findById(storeId)
+            .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+
+    // 해당 스토어의 미션 ID들 수집
+    List<Long> missionIds = missionRepository.findIdsByStoreId(storeId);
+
+    // 미션 완료 이력 먼저 삭제
+    if (!missionIds.isEmpty()) {
+      userRepository.deleteByMissionIdIn(missionIds);
+    }
+
+    // 미션 리워드 이미지 S3 삭제
+    try {
+      if (!missionIds.isEmpty()) {
+        List<String> rewardUrls = missionRepository.findRewardImageUrlsByIds(missionIds);
+        for (String url : rewardUrls) {
+          if (url != null && !url.isBlank()) {
+            s3Service.deleteByUrl(url);
+          }
+        }
+      }
+    } catch (Exception ignore) {
+      // 이미지 삭제 실패는 전체 삭제를 막지 않음
+    }
+
+    // 미션 삭제
+    missionRepository.deleteByStore_Id(storeId);
+
+    // 쿠폰, 스탬프, 메뉴, 해시태그 관계 삭제
+    couponRepository.deleteByStore_Id(storeId);
+    stampRepository.deleteByStore_Id(storeId);
+    menuRepository.deleteByStore_Id(storeId);
+    storeHashtagRepository.deleteByStore_Id(storeId);
+
+    // 가게 메인 이미지 S3 삭제
+    try {
+      String url = store.getMainImageUrl();
+      if (url != null && !url.isBlank()) {
+        s3Service.deleteByUrl(url);
+      }
+    } catch (Exception ignore) {
+      // 이미지 삭제 실패는 전체 삭제를 막지 않음
+    }
+
+    storeRepository.delete(store);
   }
 }

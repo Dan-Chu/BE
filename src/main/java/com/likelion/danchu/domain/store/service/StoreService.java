@@ -33,10 +33,12 @@ import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
 import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.global.util.DistanceUtils;
 import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.infra.s3.entity.PathName;
 import com.likelion.danchu.infra.s3.service.S3Service;
 
+import io.micrometer.common.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -168,7 +170,8 @@ public class StoreService {
    * @return 페이징된 가게 목록 응답
    * @throws CustomException 검색어가 비어 있는 경우
    */
-  public PageableResponse<StoreResponse> searchStoresByKeyword(String keyword, int page, int size) {
+  public PageableResponse<StoreDistanceResponse> searchStoresByKeyword(
+      String keyword, int page, int size, @Nullable Double lat, @Nullable Double lng) {
     if (keyword == null || keyword.trim().isEmpty()) {
       throw new CustomException(StoreErrorCode.EMPTY_KEYWORD);
     }
@@ -177,32 +180,46 @@ public class StoreService {
         storeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
     List<Store> stores = storePage.getContent();
 
-    if (stores.isEmpty()) {
-      return PageableResponse.from(storePage.map(storeMapper::toResponse)); // 빈 페이지 그대로
-    }
-
-    // 현재 페이지의 가게 ID 모으기
-    List<Long> storeIds = stores.stream().map(Store::getId).toList();
-
-    // 해당 가게들의 해시태그 관계 한 번에 조회
-    List<StoreHashtag> relations = storeHashtagRepository.findByStore_IdIn(storeIds);
-
-    // List<HashtagResponse> 매핑
+    // 현재 페이지 가게들의 해시태그를 한 번에 조회 (N+1 방지)
     Map<Long, List<HashtagResponse>> hashtagsByStoreId =
-        relations.stream()
-            .collect(
-                Collectors.groupingBy(
-                    storeHashtag -> storeHashtag.getStore().getId(),
-                    Collectors.mapping(
-                        storeHashtag -> hashtagMapper.toResponse(storeHashtag.getHashtag()),
-                        Collectors.toList())));
-    // 해시태그 포함해 DTO로 변환
-    Page<StoreResponse> responsePage =
-        storePage.map(
-            store ->
-                storeMapper.toResponse(
-                    store, hashtagsByStoreId.getOrDefault(store.getId(), List.of())));
+        stores.isEmpty() ? Map.of() : loadHashtagsByStoreIds(stores);
 
+    /**
+     * 검색된 가게를 StoreDistanceResponse 형태로 변환합니다.
+     *
+     * <p>- 각 가게는 StoreResponse(기본 정보 + 해시태그 포함)로 매핑됩니다.
+     *
+     * <p>- 요청에 위치 좌표(lat/lng)가 있으면 사용자-가게 간 거리를 계산합니다.
+     *
+     * <p>- 위치 좌표가 없거나 가게 좌표가 없으면 거리 값은 null로 내려가며,\ 응답 구조(content[i].store / distanceMeters /
+     * distanceKm)는 동일하게 유지됩니다.
+     */
+    Page<StoreDistanceResponse> responsePage =
+        storePage.map(
+            store -> {
+              StoreResponse sr =
+                  storeMapper.toResponse(
+                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+
+              Double meters = null;
+              if (lat != null
+                  && lng != null
+                  && store.getLatitude() != null
+                  && store.getLongitude() != null) {
+                double m =
+                    DistanceUtils.haversineMeters(
+                        lat, lng, store.getLatitude(), store.getLongitude());
+                meters = DistanceUtils.round1(m); // 소수 1자리
+              }
+
+              Double km = (meters == null) ? null : DistanceUtils.round2(meters / 1000d); // 소수 2자리
+
+              return StoreDistanceResponse.builder()
+                  .store(sr)
+                  .distanceMeters(meters)
+                  .distanceKm(km)
+                  .build();
+            });
     return PageableResponse.from(responsePage);
   }
 
@@ -286,8 +303,8 @@ public class StoreService {
               double meters = p.getDistance_m();
               return StoreDistanceResponse.builder()
                   .store(storeRes)
-                  .distanceMeters(Math.round(meters * 10d) / 10d) // 소수점 1자리
-                  .distanceKm(Math.round((meters / 1000d) * 100d) / 100d) // 소수점 2자리
+                  .distanceMeters(DistanceUtils.round1(meters)) // 소수 1자리
+                  .distanceKm(DistanceUtils.round2(meters / 1000d)) // 소수 2자리
                   .build();
             });
 

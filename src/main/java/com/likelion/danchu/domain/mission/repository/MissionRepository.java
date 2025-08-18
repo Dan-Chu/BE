@@ -67,12 +67,21 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
   @Query(
       value =
           """
-      SELECT m.id AS missionId, COUNT(ucm.user_id) AS cnt
-      FROM mission m
-      LEFT JOIN user_completed_mission ucm ON ucm.mission_id = m.id
-      WHERE m.id IN (:missionIds)
-      GROUP BY m.id
-      """,
+              SELECT m.id AS missionId, COUNT(ucm.user_id) AS cnt
+              FROM mission m
+              LEFT JOIN user_completed_mission ucm ON ucm.mission_id = m.id
+              WHERE m.id IN (:missionIds)
+              GROUP BY m.id
+              """,
       nativeQuery = true)
   List<Object[]> findCompleteCountsByMissionIds(@Param("missionIds") List<Long> missionIds);
+
+  @Query("select m.id from Mission m where m.store.id = :storeId")
+  List<Long> findIdsByStoreId(@Param("storeId") Long storeId);
+
+  @Query("select m.rewardImageUrl from Mission m where m.id in :ids")
+  List<String> findRewardImageUrlsByIds(@Param("ids") List<Long> ids);
+
+  // 해당 가게의 미션 전부 삭제 (가게 삭제 시 연관 정리용)
+  void deleteByStore_Id(Long storeId);
 }

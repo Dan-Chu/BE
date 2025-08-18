@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -200,5 +201,13 @@ public class StoreController {
         storeService.getNearbyStores(lat, lng, page, size, radius);
 
     return ResponseEntity.ok(BaseResponse.success("현재 위치 기준 거리순 가게 조회에 성공했습니다.", result));
+  }
+
+  @Operation(summary = "가게 삭제", description = "storeId로 가게를 삭제합니다.")
+  @DeleteMapping("/{storeId}")
+  public ResponseEntity<BaseResponse> deleteStore(
+      @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId) {
+    storeService.deleteStore(storeId);
+    return ResponseEntity.ok(BaseResponse.success("가게 삭제에 성공했습니다."));
   }
 }

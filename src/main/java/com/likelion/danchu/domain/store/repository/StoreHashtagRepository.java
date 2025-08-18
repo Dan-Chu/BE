@@ -35,4 +35,7 @@ public interface StoreHashtagRepository extends JpaRepository<StoreHashtag, Long
 
   // 해당 가게에 등록된 해시태그 개수 반환
   long countByStore_Id(Long storeId);
+
+  // 해당 가게의 해시태그 전부 삭제 (가게 삭제 시 연관 정리용)
+  void deleteByStore_Id(Long storeId);
 }

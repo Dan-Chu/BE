@@ -18,4 +18,7 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
 
   // 여러 가게(storeIds)의 메뉴를 한 번에 조회 (N+1 방지용)
   List<Menu> findByStore_IdInOrderByIdAsc(List<Long> storeIds);
+
+  // 해당 가게의 메뉴 전부 삭제 (가게 삭제 시 연관 정리용)
+  void deleteByStore_Id(Long storeId);
 }

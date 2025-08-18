@@ -11,16 +11,13 @@ import com.likelion.danchu.domain.user.entity.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
   Boolean existsByEmail(String email);
 
   Optional<User> findByEmail(String email);
 
   Boolean existsByNickname(String nickname);
 
-  @Query(
-      "select count(mid) "
-          + "from User u "
-          + "join u.completedMissionIds mid "
-          + "where u.id = :userId")
-  long countCompletedMissions(@Param("userId") Long userId);
+  @Query("select u.completedMissionCount from User u where u.id = :userId")
+  long getCompletedMissionCount(@Param("userId") Long userId);
 }

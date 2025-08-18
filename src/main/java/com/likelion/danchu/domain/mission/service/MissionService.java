@@ -162,27 +162,32 @@ public class MissionService {
   public CouponResponse completeMissionWithAuthCode(Long missionId, String authCode) {
     Long userId = SecurityUtil.getCurrentUserId();
 
-    // 1) 미션 조회
+    // 미션 조회
     Mission mission =
         missionRepository
             .findById(missionId)
             .orElseThrow(() -> new CustomException(MissionErrorCode.MISSION_NOT_FOUND));
 
-    // 2) 인증코드 → 가게 조회
+    // 가게 연결 끊긴 미션 방어
+    if (mission.getStore() == null) {
+      throw new CustomException(MissionErrorCode.MISSION_STORE_DETACHED);
+    }
+
+    // 인증코드 → 가게 조회
     Store authStore =
         storeRepository
             .findByAuthCode(authCode)
             .orElseThrow(() -> new CustomException(MissionErrorCode.INVALID_AUTH_CODE));
 
-    // 3) 미션 가게 일치 검증
+    // 미션 가게 일치 검증
     if (!mission.getStore().getId().equals(authStore.getId())) {
       throw new CustomException(MissionErrorCode.MISSION_STORE_MISMATCH);
     }
 
-    // 4) 완료 기록 (중복이면 예외)
+    // 완료 기록 (중복이면 예외)
     markCompletedOrThrow(userId, missionId);
 
-    // 5) 쿠폰 발급
+    // 쿠폰 발급
     CouponResponse coupon = couponService.createCouponFromMission(missionId, userId);
 
     return coupon;
@@ -206,6 +211,7 @@ public class MissionService {
     if (!added) {
       throw new CustomException(MissionErrorCode.ALREADY_COMPLETED);
     }
+    user.increaseCompletedMissionCount();
   }
 
   /**

@@ -21,7 +21,8 @@ public enum MissionErrorCode implements BaseErrorCode {
   ALREADY_COMPLETED("MISSION_0007", "이미 완료한 미션입니다.", HttpStatus.CONFLICT),
   POPULAR_MISSION_NOT_FOUND("MISSION_0008", "완료된 미션 기록이 없습니다.", HttpStatus.NOT_FOUND),
   MISSION_DATE_CHANGE_FORBIDDEN(
-      "MISSION_0009", "완료 이력이 있는 미션은 날짜를 변경할 수 없습니다.", HttpStatus.CONFLICT);
+      "MISSION_0009", "완료 이력이 있는 미션은 날짜를 변경할 수 없습니다.", HttpStatus.CONFLICT),
+  MISSION_STORE_DETACHED("MISSION_0010", "미션이 더 이상 가게와 연결되어 있지 않습니다.", HttpStatus.BAD_REQUEST);
 
   private final String code;
   private final String message;

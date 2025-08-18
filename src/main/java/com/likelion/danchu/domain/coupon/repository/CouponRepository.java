@@ -17,4 +17,7 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
   List<Coupon> findAllByUser_Id(Long userId);
 
   void deleteAllByUser_Id(Long userId);
+
+  // 해당 가게의 쿠폰 전부 삭제 (가게 삭제 시 연관 정리용)
+  void deleteByStore_Id(Long storeId);
 }

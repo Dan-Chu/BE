@@ -256,7 +256,7 @@ public class UserService {
     if (!userRepository.existsById(userId)) {
       throw new CustomException(UserErrorCode.USER_NOT_FOUND);
     }
-    return userRepository.countCompletedMissions(userId);
+    return userRepository.getCompletedMissionCount(userId);
   }
 
   /**

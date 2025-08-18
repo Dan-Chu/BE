@@ -328,11 +328,6 @@ public class StoreService {
     // 해당 스토어의 미션 ID들 수집
     List<Long> missionIds = missionRepository.findIdsByStoreId(storeId);
 
-    // 미션 완료 이력 먼저 삭제
-    if (!missionIds.isEmpty()) {
-      userRepository.deleteByMissionIdIn(missionIds);
-    }
-
     // 미션 리워드 이미지 S3 삭제
     try {
       if (!missionIds.isEmpty()) {

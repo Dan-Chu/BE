@@ -16,4 +16,7 @@ public interface StampRepository extends JpaRepository<Stamp, Long> {
   List<Stamp> findAllByUser_IdOrderByUpdatedAtDesc(Long userId);
 
   void deleteAllByUser_Id(Long userId);
+
+  // 해당 가게의 스탬프 전부 삭제 (가게 삭제 시 연관 정리용)
+  void deleteByStore_Id(Long storeId);
 }

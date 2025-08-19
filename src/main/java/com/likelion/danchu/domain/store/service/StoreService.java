@@ -1,5 +1,6 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,17 +8,21 @@ import java.util.stream.Collectors;
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.likelion.danchu.domain.coupon.repository.CouponRepository;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
 import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
 import com.likelion.danchu.domain.menu.mapper.MenuMapper;
 import com.likelion.danchu.domain.menu.repository.MenuRepository;
+import com.likelion.danchu.domain.mission.repository.MissionRepository;
+import com.likelion.danchu.domain.stamp.repository.StampRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
@@ -28,11 +33,14 @@ import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.mapper.StoreMapper;
 import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
+import com.likelion.danchu.domain.user.repository.UserRepository;
 import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.global.util.DistanceUtils;
 import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.infra.s3.entity.PathName;
 import com.likelion.danchu.infra.s3.service.S3Service;
 
+import io.micrometer.common.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -49,6 +57,10 @@ public class StoreService {
   private final KakaoLocalClient kakaoLocalClient;
   private final MenuRepository menuRepository;
   private final MenuMapper menuMapper;
+  private final MissionRepository missionRepository;
+  private final UserRepository userRepository;
+  private final CouponRepository couponRepository;
+  private final StampRepository stampRepository;
 
   /**
    * 새로운 가게를 생성합니다.
@@ -160,7 +172,8 @@ public class StoreService {
    * @return 페이징된 가게 목록 응답
    * @throws CustomException 검색어가 비어 있는 경우
    */
-  public PageableResponse<StoreResponse> searchStoresByKeyword(String keyword, int page, int size) {
+  public PageableResponse<StoreDistanceResponse> searchStoresByKeyword(
+      String keyword, int page, int size, @Nullable Double lat, @Nullable Double lng) {
     if (keyword == null || keyword.trim().isEmpty()) {
       throw new CustomException(StoreErrorCode.EMPTY_KEYWORD);
     }
@@ -169,32 +182,64 @@ public class StoreService {
         storeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
     List<Store> stores = storePage.getContent();
 
-    if (stores.isEmpty()) {
-      return PageableResponse.from(storePage.map(storeMapper::toResponse)); // 빈 페이지 그대로
+    // 현재 페이지 가게들의 해시태그를 한 번에 조회 (N+1 방지)
+    Map<Long, List<HashtagResponse>> hashtagsByStoreId =
+        stores.isEmpty() ? Map.of() : loadHashtagsByStoreIds(stores);
+
+    /**
+     * 검색된 가게를 StoreDistanceResponse 형태로 변환합니다.
+     *
+     * <p>- 각 가게는 StoreResponse(기본 정보 + 해시태그 포함)로 매핑됩니다.
+     *
+     * <p>- 요청에 위치 좌표(lat/lng)가 있으면 사용자-가게 간 거리를 계산합니다.
+     *
+     * <p>- 위치 좌표가 없거나 가게 좌표가 없으면 거리 값은 null로 내려가며,\ 응답 구조(content[i].store / distanceMeters /
+     * distanceKm)는 동일하게 유지됩니다.
+     */
+    Page<StoreDistanceResponse> responsePage =
+        storePage.map(
+            store -> {
+              StoreResponse sr =
+                  storeMapper.toResponse(
+                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+
+              Double meters = null;
+              if (lat != null
+                  && lng != null
+                  && store.getLatitude() != null
+                  && store.getLongitude() != null) {
+                double m =
+                    DistanceUtils.haversineMeters(
+                        lat, lng, store.getLatitude(), store.getLongitude());
+                meters = DistanceUtils.round1(m); // 소수 1자리
+              }
+
+              Double km = (meters == null) ? null : DistanceUtils.round2(meters / 1000d); // 소수 2자리
+
+              return StoreDistanceResponse.builder()
+                  .store(sr)
+                  .distanceMeters(meters)
+                  .distanceKm(km)
+                  .build();
+            });
+
+    // 좌표가 있으면 현재 페이지 내에서 거리 오름차순 정렬 후 반환
+    if (lat != null && lng != null) {
+      var sorted =
+          responsePage.getContent().stream()
+              .sorted(
+                  Comparator.comparing(
+                      r ->
+                          r.getDistanceMeters() == null ? Double.MAX_VALUE : r.getDistanceMeters()))
+              .toList();
+
+      PageImpl<StoreDistanceResponse> sortedPage =
+          new PageImpl<>(sorted, responsePage.getPageable(), responsePage.getTotalElements());
+
+      return PageableResponse.from(sortedPage);
     }
 
-    // 현재 페이지의 가게 ID 모으기
-    List<Long> storeIds = stores.stream().map(Store::getId).toList();
-
-    // 해당 가게들의 해시태그 관계 한 번에 조회
-    List<StoreHashtag> relations = storeHashtagRepository.findByStore_IdIn(storeIds);
-
-    // List<HashtagResponse> 매핑
-    Map<Long, List<HashtagResponse>> hashtagsByStoreId =
-        relations.stream()
-            .collect(
-                Collectors.groupingBy(
-                    storeHashtag -> storeHashtag.getStore().getId(),
-                    Collectors.mapping(
-                        storeHashtag -> hashtagMapper.toResponse(storeHashtag.getHashtag()),
-                        Collectors.toList())));
-    // 해시태그 포함해 DTO로 변환
-    Page<StoreResponse> responsePage =
-        storePage.map(
-            store ->
-                storeMapper.toResponse(
-                    store, hashtagsByStoreId.getOrDefault(store.getId(), List.of())));
-
+    // 좌표가 없으면: 기존 순서 그대로 반환
     return PageableResponse.from(responsePage);
   }
 
@@ -278,8 +323,8 @@ public class StoreService {
               double meters = p.getDistance_m();
               return StoreDistanceResponse.builder()
                   .store(storeRes)
-                  .distanceMeters(Math.round(meters * 10d) / 10d) // 소수점 1자리
-                  .distanceKm(Math.round((meters / 1000d) * 100d) / 100d) // 소수점 2자리
+                  .distanceMeters(DistanceUtils.round1(meters)) // 소수 1자리
+                  .distanceKm(DistanceUtils.round2(meters / 1000d)) // 소수 2자리
                   .build();
             });
 
@@ -303,5 +348,56 @@ public class StoreService {
                 r -> r.getStore().getId(),
                 Collectors.mapping(
                     r -> hashtagMapper.toResponse(r.getHashtag()), Collectors.toList())));
+  }
+
+  /**
+   * 가게 삭제
+   *
+   * <p>S3 같은 외부 시스템 실패 때문에 핵심 트랜잭션(DB 삭제)을 롤백시키지 않기 위해 이미지 삭제는 실패해도 진행
+   */
+  public void deleteStore(Long storeId) {
+    // 가게 조회
+    Store store =
+        storeRepository
+            .findById(storeId)
+            .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+
+    // 해당 스토어의 미션 ID들 수집
+    List<Long> missionIds = missionRepository.findIdsByStoreId(storeId);
+
+    // 미션 리워드 이미지 S3 삭제
+    try {
+      if (!missionIds.isEmpty()) {
+        List<String> rewardUrls = missionRepository.findRewardImageUrlsByIds(missionIds);
+        for (String url : rewardUrls) {
+          if (url != null && !url.isBlank()) {
+            s3Service.deleteByUrl(url);
+          }
+        }
+      }
+    } catch (Exception ignore) {
+      // 이미지 삭제 실패는 전체 삭제를 막지 않음
+    }
+
+    // 미션 삭제
+    missionRepository.deleteByStore_Id(storeId);
+
+    // 쿠폰, 스탬프, 메뉴, 해시태그 관계 삭제
+    couponRepository.deleteByStore_Id(storeId);
+    stampRepository.deleteByStore_Id(storeId);
+    menuRepository.deleteByStore_Id(storeId);
+    storeHashtagRepository.deleteByStore_Id(storeId);
+
+    // 가게 메인 이미지 S3 삭제
+    try {
+      String url = store.getMainImageUrl();
+      if (url != null && !url.isBlank()) {
+        s3Service.deleteByUrl(url);
+      }
+    } catch (Exception ignore) {
+      // 이미지 삭제 실패는 전체 삭제를 막지 않음
+    }
+
+    storeRepository.delete(store);
   }
 }

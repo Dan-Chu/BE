@@ -28,4 +28,10 @@ public class StampResponse {
 
   @Schema(description = "스탬프카드 상태 (적립 진행중 or 보상 수령 대기)", example = "IN_PROGRESS")
   private StampStatus status;
+
+  @Schema(description = "사용자 이름", example = "danchu")
+  private String nickname;
+
+  @Schema(description = "가게 인증코드", example = "0000")
+  private String authCode;
 }

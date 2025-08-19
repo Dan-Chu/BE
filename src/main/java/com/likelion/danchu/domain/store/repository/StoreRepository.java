@@ -108,4 +108,52 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
       @Param("lng") double lng,
       @Param("radius") Double radius,
       Pageable pageable);
+
+  // 모든 해시태그를 만족하는 가게를 거리순 정렬
+  @Query(
+      value =
+          """
+      SELECT
+        s.id,
+        s.name,
+        s.address,
+        s.description,
+        s.phone_number,
+        s.open_time,
+        s.close_time,
+        s.main_image_url,
+        s.latitude,
+        s.longitude,
+        (6371000 * ACOS(LEAST(1,
+          COS(RADIANS(:lat)) * COS(RADIANS(s.latitude)) *
+          COS(RADIANS(s.longitude) - RADIANS(:lng)) +
+          SIN(RADIANS(:lat)) * SIN(RADIANS(s.latitude))
+        ))) AS distance_m
+      FROM store s
+      JOIN store_hashtag sh ON sh.store_id = s.id
+      JOIN hashtag h ON h.id = sh.hashtag_id
+      WHERE LOWER(h.name) IN (:names)
+      GROUP BY s.id
+      HAVING COUNT(DISTINCT LOWER(h.name)) = :size
+      ORDER BY distance_m ASC
+      """,
+      countQuery =
+          """
+          SELECT COUNT(*) FROM (
+            SELECT s.id
+            FROM store s
+            JOIN store_hashtag sh ON sh.store_id = s.id
+            JOIN hashtag h ON h.id = sh.hashtag_id
+            WHERE LOWER(h.name) IN (:names)
+            GROUP BY s.id
+            HAVING COUNT(DISTINCT LOWER(h.name)) = :size
+          ) t
+          """,
+      nativeQuery = true)
+  Page<StoreWithDistanceProjection> findByAllHashtagsWithDistance(
+      @Param("names") List<String> names,
+      @Param("size") long size,
+      @Param("lat") double lat,
+      @Param("lng") double lng,
+      Pageable pageable);
 }

@@ -33,9 +33,26 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(
+            exception ->
+                exception.authenticationEntryPoint(
+                    (request, response, authException) -> {
+                      response.setStatus(401);
+                      response.setContentType("application/json;charset=UTF-8");
+                      String json =
+                          """
+                              {
+                                "success": false,
+                                "code": 401,
+                                "message": "로그인이 필요합니다."
+                              }
+                          """;
+                      response.getWriter().write(json);
+                    }))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/api/**", "/")
+                auth.requestMatchers(
+                        "/", "/api/users/register", "/api/auth/login/**", "/api/auth/refresh")
                     .permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()

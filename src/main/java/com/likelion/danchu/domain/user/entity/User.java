@@ -49,6 +49,16 @@ public class User extends BaseTimeEntity {
   @Column(name = "profile_image_url", nullable = true)
   private String profileImageUrl;
 
+  // 완료 미션 카운트
+  @Builder.Default
+  @Column(name = "completed_mission_count", nullable = false)
+  private int completedMissionCount = 0;
+
+  // 완료 미션 카운트 +1
+  public void increaseCompletedMissionCount() {
+    this.completedMissionCount++;
+  }
+
   // 완료한 미션 ID 리스트 조인테이블로 저장
   @Builder.Default
   @ElementCollection(fetch = FetchType.LAZY)

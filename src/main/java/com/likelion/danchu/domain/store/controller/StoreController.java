@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,14 +107,28 @@ public class StoreController {
 
   @Operation(
       summary = "가게 이름 검색",
-      description = "검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.")
+      description =
+          """
+              검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.
+              - 요청에 위도(lat), 경도(lng)를 함께 전달하면 결과가 거리순(가까운 순)으로 정렬됩니다.
+              """)
   @GetMapping("/search")
-  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> searchStoresByKeyword(
-      @RequestParam String keyword,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "3") int size) {
-    PageableResponse<StoreResponse> storeResponse =
-        storeService.searchStoresByKeyword(keyword, page, size);
+  public ResponseEntity<BaseResponse<PageableResponse<StoreDistanceResponse>>>
+      searchStoresByKeyword(
+          @RequestParam String keyword,
+          @Parameter(description = "사용자 위도", example = "37.4881292540693")
+              @RequestParam(required = false)
+              Double lat,
+          @Parameter(description = "사용자 경도", example = "127.111066039437")
+              @RequestParam(required = false)
+              Double lng,
+          @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
+              @RequestParam(defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지 크기", example = "3") @RequestParam(defaultValue = "3")
+              int size) {
+    PageableResponse<StoreDistanceResponse> storeResponse =
+        storeService.searchStoresByKeyword(keyword, page, size, lat, lng);
 
     return ResponseEntity.ok(BaseResponse.success("가게 검색에 성공했습니다.", storeResponse));
   }
@@ -157,14 +172,25 @@ public class StoreController {
               - 400: Hashtags 파라미터가 비었거나 유효하지 않음
               - 404: 존재하지 않는 해시태그가 포함됨
               - 먼저 /api/hashtags로 확인하고 사용하세요.
+              - 요청에 위도(lat), 경도(lng)를 함께 전달하면 결과가 거리순(가까운 순)으로 정렬됩니다.
               """)
   @GetMapping("/filter")
-  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> filterStoresByHashtags(
-      @RequestParam List<String> tags,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "3") int size) {
-    PageableResponse<StoreResponse> result =
-        storeHashtagService.filterStoresByHashtags(tags, page, size);
+  public ResponseEntity<BaseResponse<PageableResponse<StoreDistanceResponse>>>
+      filterStoresByHashtags(
+          @RequestParam List<String> tags,
+          @Parameter(description = "사용자 위도", example = "37.4881292540693")
+              @RequestParam(required = false)
+              Double lat,
+          @Parameter(description = "사용자 경도", example = "127.111066039437")
+              @RequestParam(required = false)
+              Double lng,
+          @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
+              @RequestParam(defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지 크기", example = "3") @RequestParam(defaultValue = "3")
+              int size) {
+    PageableResponse<StoreDistanceResponse> result =
+        storeHashtagService.filterStoresByHashtags(tags, page, size, lat, lng);
     return ResponseEntity.ok(BaseResponse.success("가게 해시태그 필터 조회 성공했습니다.", result));
   }
 
@@ -200,5 +226,13 @@ public class StoreController {
         storeService.getNearbyStores(lat, lng, page, size, radius);
 
     return ResponseEntity.ok(BaseResponse.success("현재 위치 기준 거리순 가게 조회에 성공했습니다.", result));
+  }
+
+  @Operation(summary = "가게 삭제", description = "storeId로 가게를 삭제합니다.")
+  @DeleteMapping("/{storeId}")
+  public ResponseEntity<BaseResponse> deleteStore(
+      @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId) {
+    storeService.deleteStore(storeId);
+    return ResponseEntity.ok(BaseResponse.success("가게 삭제에 성공했습니다."));
   }
 }

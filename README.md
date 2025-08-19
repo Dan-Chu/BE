@@ -16,8 +16,8 @@
 🙋 마이페이지: 쿠폰함, 관심 해시태그, 프로필 관리
 <br><br>
 
-### Contributors
-|<img src="https://avatars.githubusercontent.com/u/162952415?v=4" width="200" height="200"/>|<img width="200" height="200" src="https://github.com/user-attachments/assets/c70091fc-1544-4a4b-92b1-79073426fdce" />|
+### BE Contributors
+|<img src="https://avatars.githubusercontent.com/u/162952415?v=4" width="150" height="150"/>|<img width="150" height="150" src="https://github.com/user-attachments/assets/c70091fc-1544-4a4b-92b1-79073426fdce" />|
 |:-:|:-:|
 |[@naooung](https://github.com/naooung) 김나경 |[@shinchaerin79](https://github.com/shinchaerin79) 신채린 |
 <br>
@@ -101,12 +101,12 @@ src/main/java/com/likelion/danchu
 <img src="https://github.com/user-attachments/assets/b0e390be-6e1c-4bc0-85df-b1bba265716a" width="800">
 <br><br>
 
-> 1. 기능 개발
->  - develop 브랜치에서 feature/* 브랜치 생성
->  - 개발 완료 후 → feature/* → develop 병합
-> 2. 리팩토링
->  - develop 브랜치에서 refactor/* 브랜치 생성
->  - 수정 완료 후 → refactor/* → develop 병합
-> 3. 배포
->  - develop → main 병합 후 운영 배포
->  - main 브랜치는 항상 운영 가능한 상태 유지
+#### 기능 개발
+  - develop 브랜치에서 feature/* 브랜치 생성
+  - 개발 완료 후 → feature/* → develop 병합
+#### 리팩토링
+  - develop 브랜치에서 refactor/* 브랜치 생성
+  - 수정 완료 후 → refactor/* → develop 병합
+#### 배포
+  - develop → main 병합 후 운영 배포
+  - main 브랜치는 항상 운영 가능한 상태 유지

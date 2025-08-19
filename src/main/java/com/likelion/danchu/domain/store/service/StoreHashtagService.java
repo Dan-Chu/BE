@@ -1,10 +1,12 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import com.likelion.danchu.domain.hashtag.exception.HashtagErrorCode;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.entity.StoreHashtag;
@@ -24,7 +27,9 @@ import com.likelion.danchu.domain.store.mapper.StoreMapper;
 import com.likelion.danchu.domain.store.repository.StoreHashtagRepository;
 import com.likelion.danchu.domain.store.repository.StoreRepository;
 import com.likelion.danchu.global.exception.CustomException;
+import com.likelion.danchu.global.util.DistanceUtils;
 
+import io.micrometer.common.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -98,8 +103,8 @@ public class StoreHashtagService {
    * @return PageableResponse<StoreResponse> 페이징된 가게 목록 응답
    * @throws CustomException 해시태그 목록이 비어 있거나 존재하지 않는 경우
    */
-  public PageableResponse<StoreResponse> filterStoresByHashtags(
-      List<String> tags, int page, int size) {
+  public PageableResponse<StoreDistanceResponse> filterStoresByHashtags(
+      List<String> tags, int page, int size, @Nullable Double lat, @Nullable Double lng) {
 
     // 해시태그가 없을 때 예외 발생
     if (tags == null || tags.isEmpty()) {
@@ -174,12 +179,49 @@ public class StoreHashtagService {
                         Collectors.toList())));
 
     // 해시태그 포함 DTO로 변환
-    Page<StoreResponse> responsePage =
+    Page<StoreDistanceResponse> responsePage =
         storePage.map(
-            store ->
-                storeMapper.toResponse(
-                    store, hashtagsByStoreId.getOrDefault(store.getId(), List.of())));
+            store -> {
+              StoreResponse storeResponse =
+                  storeMapper.toResponse(
+                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
 
+              Double meters = null;
+              if (lat != null
+                  && lng != null
+                  && store.getLatitude() != null
+                  && store.getLongitude() != null) {
+                double m =
+                    DistanceUtils.haversineMeters(
+                        lat, lng, store.getLatitude(), store.getLongitude());
+                meters = DistanceUtils.round1(m); // 소수 1자리
+              }
+              Double km = (meters == null) ? null : DistanceUtils.round2(meters / 1000d); // 소수 2자리
+
+              return StoreDistanceResponse.builder()
+                  .store(storeResponse)
+                  .distanceMeters(meters)
+                  .distanceKm(km)
+                  .build();
+            });
+
+    // 좌표가 있으면 현재 페이지 내에서 거리 오름차순 정렬 후 반환
+    if (lat != null && lng != null) {
+      var sorted =
+          responsePage.getContent().stream()
+              .sorted(
+                  Comparator.comparing(
+                      s ->
+                          s.getDistanceMeters() == null ? Double.MAX_VALUE : s.getDistanceMeters()))
+              .toList();
+
+      PageImpl<StoreDistanceResponse> sortedPage =
+          new PageImpl<>(sorted, responsePage.getPageable(), responsePage.getTotalElements());
+
+      return PageableResponse.from(sortedPage);
+    }
+
+    // 좌표가 없으면: 기존 순서 그대로 반환
     return PageableResponse.from(responsePage);
   }
 }

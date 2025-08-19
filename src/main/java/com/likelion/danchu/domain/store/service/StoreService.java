@@ -1,5 +1,6 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -220,6 +222,24 @@ public class StoreService {
                   .distanceKm(km)
                   .build();
             });
+
+    // 좌표가 있으면 현재 페이지 내에서 거리 오름차순 정렬 후 반환
+    if (lat != null && lng != null) {
+      var sorted =
+          responsePage.getContent().stream()
+              .sorted(
+                  Comparator.comparing(
+                      r ->
+                          r.getDistanceMeters() == null ? Double.MAX_VALUE : r.getDistanceMeters()))
+              .toList();
+
+      PageImpl<StoreDistanceResponse> sortedPage =
+          new PageImpl<>(sorted, responsePage.getPageable(), responsePage.getTotalElements());
+
+      return PageableResponse.from(sortedPage);
+    }
+
+    // 좌표가 없으면: 기존 순서 그대로 반환
     return PageableResponse.from(responsePage);
   }
 

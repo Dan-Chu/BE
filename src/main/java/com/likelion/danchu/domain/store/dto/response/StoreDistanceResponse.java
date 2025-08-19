@@ -13,8 +13,8 @@ public class StoreDistanceResponse {
   private StoreResponse store;
 
   @Schema(description = "현재 위치로부터 거리(미터)", example = "152.3")
-  private double distanceMeters;
+  private Double distanceMeters;
 
   @Schema(description = "현재 위치로부터 거리(킬로미터)", example = "0.15")
-  private double distanceKm;
+  private Double distanceKm;
 }

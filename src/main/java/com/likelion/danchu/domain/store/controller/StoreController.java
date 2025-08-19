@@ -107,7 +107,11 @@ public class StoreController {
 
   @Operation(
       summary = "가게 이름 검색",
-      description = "검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.")
+      description =
+          """
+              검색어(keyword)를 기반으로 가게 이름에 해당 키워드가 포함된 가게 목록을 조회합니다.
+              - 요청에 위도(lat), 경도(lng)를 함께 전달하면 결과가 거리순(가까운 순)으로 정렬됩니다.
+              """)
   @GetMapping("/search")
   public ResponseEntity<BaseResponse<PageableResponse<StoreDistanceResponse>>>
       searchStoresByKeyword(
@@ -168,14 +172,25 @@ public class StoreController {
               - 400: Hashtags 파라미터가 비었거나 유효하지 않음
               - 404: 존재하지 않는 해시태그가 포함됨
               - 먼저 /api/hashtags로 확인하고 사용하세요.
+              - 요청에 위도(lat), 경도(lng)를 함께 전달하면 결과가 거리순(가까운 순)으로 정렬됩니다.
               """)
   @GetMapping("/filter")
-  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> filterStoresByHashtags(
-      @RequestParam List<String> tags,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "3") int size) {
-    PageableResponse<StoreResponse> result =
-        storeHashtagService.filterStoresByHashtags(tags, page, size);
+  public ResponseEntity<BaseResponse<PageableResponse<StoreDistanceResponse>>>
+      filterStoresByHashtags(
+          @RequestParam List<String> tags,
+          @Parameter(description = "사용자 위도", example = "37.4881292540693")
+              @RequestParam(required = false)
+              Double lat,
+          @Parameter(description = "사용자 경도", example = "127.111066039437")
+              @RequestParam(required = false)
+              Double lng,
+          @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
+              @RequestParam(defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지 크기", example = "3") @RequestParam(defaultValue = "3")
+              int size) {
+    PageableResponse<StoreDistanceResponse> result =
+        storeHashtagService.filterStoresByHashtags(tags, page, size, lat, lng);
     return ResponseEntity.ok(BaseResponse.success("가게 해시태그 필터 조회 성공했습니다.", result));
   }
 

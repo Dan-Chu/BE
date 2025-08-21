@@ -86,4 +86,43 @@ public class MenuService {
         .map(menuMapper::toResponse) // priceFormatted 포함됨
         .toList();
   }
+
+  /**
+   * 특정 메뉴 삭제
+   *
+   * @param storeId 대상 가게 ID
+   * @param menuId 삭제할 메뉴 ID
+   * @throws CustomException {@code STORE_NOT_FOUND} - 가게가 존재하지 않는 경우
+   * @throws CustomException {@code MENU_NOT_FOUND} - 해당 가게에 메뉴가 존재하지 않는 경우
+   */
+  public void deleteMenu(Long storeId, Long menuId) {
+    // 가게 존재 확인
+    if (!storeRepository.existsById(storeId)) {
+      throw new CustomException(
+          com.likelion.danchu.domain.store.exception.StoreErrorCode.STORE_NOT_FOUND);
+    }
+
+    // 메뉴 조회 (storeId 일치 여부 검증)
+    Menu menu =
+        menuRepository
+            .findById(menuId)
+            .orElseThrow(() -> new CustomException(MenuErrorCode.MENU_NOT_FOUND));
+
+    if (!menu.getStore().getId().equals(storeId)) {
+      throw new CustomException(MenuErrorCode.MENU_NOT_FOUND); // 다른 가게의 메뉴를 잘못 요청한 경우
+    }
+
+    // S3 이미지 삭제 (있을 경우)
+    String url = menu.getImageUrl(); // 엔티티 필드명 맞춰 사용
+    if (url != null && !url.isBlank()) {
+      try {
+        s3Service.deleteByUrl(url);
+      } catch (Exception ignored) {
+        // 이미지 삭제 실패는 무시하고 메뉴 삭제 진행
+      }
+    }
+
+    // 메뉴 삭제
+    menuRepository.delete(menu);
+  }
 }

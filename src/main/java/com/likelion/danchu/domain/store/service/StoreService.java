@@ -313,7 +313,7 @@ public class StoreService {
                       .mainImageUrl(p.getMain_Image_Url())
                       .latitude(p.getLatitude())
                       .longitude(p.getLongitude())
-                      .authCode("") // 응답 비노출
+                      .authCode(p.getAuth_Code())
                       .build();
 
               StoreResponse storeRes =

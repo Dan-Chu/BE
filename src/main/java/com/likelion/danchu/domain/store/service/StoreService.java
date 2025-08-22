@@ -26,6 +26,7 @@ import com.likelion.danchu.domain.stamp.repository.StampRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreListItemResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.entity.StoreHashtag;
@@ -128,13 +129,15 @@ public class StoreService {
    * @param size 한 페이지에 포함될 가게 수
    * @return 페이징된 가게 목록 응답
    */
-  public PageableResponse<StoreResponse> getPaginatedStores(int page, int size) {
+  public PageableResponse<StoreListItemResponse> getPaginatedStores(int page, int size) {
     PageRequest pageRequest = PageRequest.of(page, size); // 페이지당 3개
     Page<Store> storePage = storeRepository.findAll(pageRequest);
     List<Store> stores = storePage.getContent();
 
     if (stores.isEmpty()) {
-      return PageableResponse.from(storePage.map(storeMapper::toResponse)); // 그대로 빈 페이지 반환
+      Page<StoreListItemResponse> empty =
+          storePage.map(s -> storeMapper.toListItem(s, List.of(), List.of())); // 메뉴 빈 리스트
+      return PageableResponse.from(empty);
     }
 
     // 현재 페이지의 가게 ID들 수집
@@ -156,16 +159,16 @@ public class StoreService {
     // 메뉴 응답 리스트도 한 번에 로딩하여 (N+1 방지)
     Map<Long, List<MenuResponse>> menusByStoreId = loadMenusByStoreIds(storeIds);
 
-    // 각 가게 별로 해시태그 포함하여 DTO 변환
-    Page<StoreResponse> storeResponsePage =
+    // StoreListItemResponse(store로 래핑)
+    Page<StoreListItemResponse> wrappedPage =
         storePage.map(
             store ->
-                storeMapper.toResponse(
+                storeMapper.toListItem(
                     store,
                     hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
                     menusByStoreId.getOrDefault(store.getId(), List.of())));
 
-    return PageableResponse.from(storeResponsePage);
+    return PageableResponse.from(wrappedPage);
   }
 
   /**

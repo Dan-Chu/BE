@@ -46,8 +46,8 @@ public class StoreRequest {
 
   @NotBlank(message = "전화번호는 필수입니다.")
   @Pattern(
-      regexp = "^\\d{2,3}-\\d{3,4}-\\d{4}$",
-      message = "전화번호는 형식에 맞게 입력해주세요. (예: 010-1234-5678 / 02-345-6789)")
+      regexp = "^(?:\\d{2,3}-\\d{3,4}-\\d{4}|050\\d-\\d{3,4}-\\d{4})$",
+      message = "전화번호는 형식에 맞게 입력해주세요. (예: 010-1234-5678 / 02-345-6789 / 0507-1418-3557)")
   @Schema(description = "전화번호", example = "010-1234-5678")
   private String phoneNumber;
 

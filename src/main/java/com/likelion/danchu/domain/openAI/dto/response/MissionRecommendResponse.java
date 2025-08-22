@@ -16,7 +16,7 @@ public class MissionRecommendResponse {
   private String title;
 
   @Schema(description = "미션 보상(이름/설명)", example = "사이다 1잔")
-  private String rewardName;
+  private String reward;
 
   @Schema(description = "가게 이름", example = "동방손칼국수")
   private String storeName;

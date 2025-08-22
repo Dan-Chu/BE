@@ -1,7 +1,11 @@
 #  🧶 단추
 가게마다 찍히는 단골의 추억을 연결하는 지역 기반 단골 플랫폼
 
-<img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/9db6a458-694a-4090-8890-7193756c91cb" />
+<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/edb5882b-0251-43a3-a59a-6194e3d9ebdd" />
+<br><br>
+
+### 🔗 Link
+https://www.danchu.site
 <br><br>
 
 ### Description
@@ -72,7 +76,7 @@ src/main/java/com/likelion/danchu
 ```
 
 ### System Architecture
-<img width="2500" alt="image" src="https://github.com/user-attachments/assets/cc7102c7-a95f-4a1a-a207-b67343c3d595" />
+<img width="2500" alt="image" src="https://github.com/user-attachments/assets/df4120f6-9de4-457e-96e4-538beefe90db" />
 <br><br>
 
 ### ERD
@@ -98,9 +102,6 @@ src/main/java/com/likelion/danchu
 
 
 ### Branch Convention
-<img src="https://github.com/user-attachments/assets/b0e390be-6e1c-4bc0-85df-b1bba265716a" width="800">
-<br><br>
-
 #### 기능 개발
   - develop 브랜치에서 feature/* 브랜치 생성
   - 개발 완료 후 → feature/* → develop 병합
@@ -110,3 +111,4 @@ src/main/java/com/likelion/danchu
 #### 배포
   - develop → main 병합 후 운영 배포
   - main 브랜치는 항상 운영 가능한 상태 유지
+<img src="https://github.com/user-attachments/assets/b0e390be-6e1c-4bc0-85df-b1bba265716a" width="800">

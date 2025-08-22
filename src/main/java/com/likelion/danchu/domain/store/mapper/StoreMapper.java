@@ -58,6 +58,7 @@ public class StoreMapper {
         .phoneNumber(store.getPhoneNumber())
         .openTime(store.getOpenTime())
         .closeTime(store.getCloseTime())
+        .authCode(store.getAuthCode())
         .mainImageUrl(store.getMainImageUrl())
         .hashtags(hashtags != null ? hashtags : List.of()) // null 방어
         .isOpen(isOpen)

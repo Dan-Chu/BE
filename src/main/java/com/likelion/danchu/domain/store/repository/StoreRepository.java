@@ -56,6 +56,8 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     Double getLongitude();
 
     Double getDistance_m(); // alias와 동일해야 함
+
+    String getAuth_Code();
   }
 
   /**
@@ -84,7 +86,8 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
                 (6371000 * ACOS(LEAST(1,
                    COS(RADIANS(:lat)) * COS(RADIANS(s.latitude)) * COS(RADIANS(s.longitude) - RADIANS(:lng))
                    + SIN(RADIANS(:lat)) * SIN(RADIANS(s.latitude))
-                ))) AS distance_m
+                ))) AS distance_m,
+                                s.auth_code
               FROM store s
               WHERE (:radius IS NULL OR
                     (6371000 * ACOS(LEAST(1,
@@ -113,42 +116,43 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
   @Query(
       value =
           """
-      SELECT
-        s.id,
-        s.name,
-        s.address,
-        s.description,
-        s.phone_number,
-        s.open_time,
-        s.close_time,
-        s.main_image_url,
-        s.latitude,
-        s.longitude,
-        (6371000 * ACOS(LEAST(1,
-          COS(RADIANS(:lat)) * COS(RADIANS(s.latitude)) *
-          COS(RADIANS(s.longitude) - RADIANS(:lng)) +
-          SIN(RADIANS(:lat)) * SIN(RADIANS(s.latitude))
-        ))) AS distance_m
-      FROM store s
-      JOIN store_hashtag sh ON sh.store_id = s.id
-      JOIN hashtag h ON h.id = sh.hashtag_id
-      WHERE LOWER(h.name) IN (:names)
-      GROUP BY s.id
-      HAVING COUNT(DISTINCT LOWER(h.name)) = :size
-      ORDER BY distance_m ASC
-      """,
+              SELECT
+                s.id,
+                s.name,
+                s.address,
+                s.description,
+                s.phone_number,
+                s.open_time,
+                s.close_time,
+                s.main_image_url,
+                s.latitude,
+                s.longitude,
+                (6371000 * ACOS(LEAST(1,
+                  COS(RADIANS(:lat)) * COS(RADIANS(s.latitude)) *
+                  COS(RADIANS(s.longitude) - RADIANS(:lng)) +
+                  SIN(RADIANS(:lat)) * SIN(RADIANS(s.latitude))
+                ))) AS distance_m,
+                                  s.auth_code
+              FROM store s
+              JOIN store_hashtag sh ON sh.store_id = s.id
+              JOIN hashtag h ON h.id = sh.hashtag_id
+              WHERE LOWER(h.name) IN (:names)
+              GROUP BY s.id
+              HAVING COUNT(DISTINCT LOWER(h.name)) = :size
+              ORDER BY distance_m ASC
+              """,
       countQuery =
           """
-          SELECT COUNT(*) FROM (
-            SELECT s.id
-            FROM store s
-            JOIN store_hashtag sh ON sh.store_id = s.id
-            JOIN hashtag h ON h.id = sh.hashtag_id
-            WHERE LOWER(h.name) IN (:names)
-            GROUP BY s.id
-            HAVING COUNT(DISTINCT LOWER(h.name)) = :size
-          ) t
-          """,
+              SELECT COUNT(*) FROM (
+                SELECT s.id
+                FROM store s
+                JOIN store_hashtag sh ON sh.store_id = s.id
+                JOIN hashtag h ON h.id = sh.hashtag_id
+                WHERE LOWER(h.name) IN (:names)
+                GROUP BY s.id
+                HAVING COUNT(DISTINCT LOWER(h.name)) = :size
+              ) t
+              """,
       nativeQuery = true)
   Page<StoreWithDistanceProjection> findByAllHashtagsWithDistance(
       @Param("names") List<String> names,

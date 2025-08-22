@@ -1,5 +1,19 @@
 package com.likelion.danchu.domain.store.service;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.likelion.danchu.domain.coupon.repository.CouponRepository;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
@@ -26,19 +40,9 @@ import com.likelion.danchu.global.util.DistanceUtils;
 import com.likelion.danchu.infra.kakao.KakaoLocalClient;
 import com.likelion.danchu.infra.s3.entity.PathName;
 import com.likelion.danchu.infra.s3.service.S3Service;
+
 import io.micrometer.common.lang.Nullable;
-import jakarta.transaction.Transactional;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +67,7 @@ public class StoreService {
    * 새로운 가게를 생성합니다.
    *
    * @param storeRequest 가게 생성 요청 DTO
-   * @param imageFile    업로드할 메인 이미지 파일
+   * @param imageFile 업로드할 메인 이미지 파일
    * @return 생성된 가게 정보
    * @throws CustomException 주소 또는 인증 코드가 중복되거나, 이미지 업로드/저장 실패 시 발생
    */
@@ -163,7 +167,7 @@ public class StoreService {
                     store,
                     hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
                     List.of() // 메뉴 미포함. 필요 시 주입
-                ));
+                    ));
 
     return PageableResponse.from(wrappedPage);
   }
@@ -172,8 +176,8 @@ public class StoreService {
    * 검색어(keyword)가 가게 이름에 포함된 가게들을 페이징 조회합니다. 각 가게의 해시태그를 함께 반환합니다.
    *
    * @param keyword 검색 키워드
-   * @param page    페이지 번호 (0부터 시작)
-   * @param size    한 페이지에 포함될 가게 수
+   * @param page 페이지 번호 (0부터 시작)
+   * @param size 한 페이지에 포함될 가게 수
    * @return 페이징된 가게 목록 응답
    * @throws CustomException 검색어가 비어 있는 경우
    */
@@ -287,10 +291,10 @@ public class StoreService {
   /**
    * 현재 위치(:lat, :lng)를 기준으로 거리순으로 정렬된 가게 목록을 페이징 조회합니다.
    *
-   * @param lat          사용자 위도(WGS84)
-   * @param lng          사용자 경도(WGS84)
-   * @param page         0부터 시작하는 페이지 번호
-   * @param size         페이지 크기(1 이상)
+   * @param lat 사용자 위도(WGS84)
+   * @param lng 사용자 경도(WGS84)
+   * @param page 0부터 시작하는 페이지 번호
+   * @param size 페이지 크기(1 이상)
    * @param radiusMeters 검색 반경(미터). null이면 반경 제한 없음
    * @return 거리 정보가 포함된 페이징 응답
    */

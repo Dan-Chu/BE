@@ -35,6 +35,9 @@ public class StoreResponse {
   @Schema(description = "마감 시간 (HH:mm)", example = "21:00")
   private String closeTime;
 
+  @Schema(description = "가게 인증 코드")
+  private String authCode;
+
   @Schema(description = "대표 이미지 URL", example = "https://s3.amazonaws.com/bucket/image.jpg")
   private String mainImageUrl;
 

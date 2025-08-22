@@ -17,6 +17,10 @@ import com.likelion.danchu.domain.hashtag.entity.Hashtag;
 import com.likelion.danchu.domain.hashtag.exception.HashtagErrorCode;
 import com.likelion.danchu.domain.hashtag.mapper.HashtagMapper;
 import com.likelion.danchu.domain.hashtag.repository.HashtagRepository;
+import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
+import com.likelion.danchu.domain.menu.entity.Menu;
+import com.likelion.danchu.domain.menu.mapper.MenuMapper;
+import com.likelion.danchu.domain.menu.repository.MenuRepository;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
@@ -42,6 +46,8 @@ public class StoreHashtagService {
   private final StoreRepository storeRepository;
   private final StoreHashtagRepository storeHashtagRepository;
   private final StoreMapper storeMapper;
+  private final MenuRepository menuRepository;
+  private final MenuMapper menuMapper;
 
   /**
    * 특정 가게에 해시태그를 생성/연결하는 서비스 메서드
@@ -178,13 +184,18 @@ public class StoreHashtagService {
                         storeHashtag -> hashtagMapper.toResponse(storeHashtag.getHashtag()),
                         Collectors.toList())));
 
+    // menusByStoreId 생성
+    Map<Long, List<MenuResponse>> menusByStoreId = loadMenusByStoreIds(pageStoreIds);
+
     // 해시태그 포함 DTO로 변환
     Page<StoreDistanceResponse> responsePage =
         storePage.map(
             store -> {
               StoreResponse storeResponse =
                   storeMapper.toResponse(
-                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+                      store,
+                      hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
+                      menusByStoreId.getOrDefault(store.getId(), List.of()));
 
               Double meters = null;
               if (lat != null
@@ -223,5 +234,26 @@ public class StoreHashtagService {
 
     // 좌표가 없으면: 기존 순서 그대로 반환
     return PageableResponse.from(responsePage);
+  }
+
+  /**
+   * 주어진 가게 ID 목록에 해당하는 메뉴들을 한 번에 조회하여 storeId 기준으로 MenuResponse 리스트로 매핑합니다.
+   *
+   * @param storeIds 메뉴를 조회할 가게 ID 리스트
+   * @return Map<StoreId, 메뉴 응답 리스트>
+   */
+  private Map<Long, List<MenuResponse>> loadMenusByStoreIds(List<Long> storeIds) {
+    if (storeIds == null || storeIds.isEmpty()) {
+      return Map.of();
+    }
+    // N+1 방지: 한 번에 조회
+    List<Menu> menus = menuRepository.findByStore_IdInOrderByIdAsc(storeIds);
+
+    // storeId 기준 그룹핑 → DTO 매핑
+    return menus.stream()
+        .collect(
+            Collectors.groupingBy(
+                m -> m.getStore().getId(),
+                Collectors.mapping(menuMapper::toResponse, Collectors.toList())));
   }
 }

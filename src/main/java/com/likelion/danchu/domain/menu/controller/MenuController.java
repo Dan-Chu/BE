@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,5 +69,14 @@ public class MenuController {
   public ResponseEntity<BaseResponse<List<MenuResponse>>> getMenus(@PathVariable Long storeId) {
     List<MenuResponse> responses = menuService.getMenus(storeId);
     return ResponseEntity.ok(BaseResponse.success("메뉴 전체 조회에 성공했습니다.", responses));
+  }
+
+  @Operation(summary = "특정 메뉴 삭제", description = "storeId와 menuId로 특정 메뉴를 삭제합니다.")
+  @DeleteMapping("/{menuId}")
+  public ResponseEntity<BaseResponse> deleteMenu(
+      @Parameter(description = "가게 ID", example = "1") @PathVariable Long storeId,
+      @Parameter(description = "메뉴 ID", example = "3") @PathVariable Long menuId) {
+    menuService.deleteMenu(storeId, menuId);
+    return ResponseEntity.ok(BaseResponse.success("메뉴 삭제에 성공했습니다."));
   }
 }

@@ -195,7 +195,7 @@ public class MissionRecommendService {
     return MissionRecommendResponse.builder()
         .missionId(m.getId())
         .title(m.getTitle())
-        .rewardName(m.getReward())
+        .reward(m.getReward())
         .storeName(s != null ? s.getName() : null)
         .build();
   }

@@ -23,6 +23,7 @@ import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreListItemResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.service.StoreHashtagService;
@@ -98,10 +99,11 @@ public class StoreController {
               - size : 페이지 당 보여줄 가게 수입니다. (기본값: 3)
               """)
   @GetMapping
-  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> getPaginatedStores(
+  public ResponseEntity<BaseResponse<PageableResponse<StoreListItemResponse>>> getPaginatedStores(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
 
-    PageableResponse<StoreResponse> storeResponses = storeService.getPaginatedStores(page, size);
+    PageableResponse<StoreListItemResponse> storeResponses =
+        storeService.getPaginatedStores(page, size);
     return ResponseEntity.ok(BaseResponse.success("가게 페이징 조회에 성공했습니다.", storeResponses));
   }
 

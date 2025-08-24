@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.menu.dto.response.MenuResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
+import com.likelion.danchu.domain.store.dto.response.StoreListItemResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 
@@ -58,6 +59,7 @@ public class StoreMapper {
         .phoneNumber(store.getPhoneNumber())
         .openTime(store.getOpenTime())
         .closeTime(store.getCloseTime())
+        .authCode(store.getAuthCode())
         .mainImageUrl(store.getMainImageUrl())
         .hashtags(hashtags != null ? hashtags : List.of()) // null 방어
         .isOpen(isOpen)
@@ -71,5 +73,19 @@ public class StoreMapper {
 
   public StoreResponse toResponse(Store store) {
     return toResponse(store, List.of(), List.of());
+  }
+
+  // StoreResponse를 store로 감싼 목록 아이템으로 변환
+  public StoreListItemResponse toListItem(
+      Store store, List<HashtagResponse> hashtags, List<MenuResponse> menus) {
+    return StoreListItemResponse.builder().store(toResponse(store, hashtags, menus)).build();
+  }
+
+  public StoreListItemResponse toListItem(Store store, List<HashtagResponse> hashtags) {
+    return StoreListItemResponse.builder().store(toResponse(store, hashtags)).build();
+  }
+
+  public StoreListItemResponse toListItem(Store store) {
+    return StoreListItemResponse.builder().store(toResponse(store)).build();
   }
 }

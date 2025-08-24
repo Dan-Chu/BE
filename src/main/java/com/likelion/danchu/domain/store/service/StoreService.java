@@ -26,6 +26,7 @@ import com.likelion.danchu.domain.stamp.repository.StampRepository;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreListItemResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.entity.Store;
 import com.likelion.danchu.domain.store.entity.StoreHashtag;
@@ -128,13 +129,15 @@ public class StoreService {
    * @param size 한 페이지에 포함될 가게 수
    * @return 페이징된 가게 목록 응답
    */
-  public PageableResponse<StoreResponse> getPaginatedStores(int page, int size) {
+  public PageableResponse<StoreListItemResponse> getPaginatedStores(int page, int size) {
     PageRequest pageRequest = PageRequest.of(page, size); // 페이지당 3개
     Page<Store> storePage = storeRepository.findAll(pageRequest);
     List<Store> stores = storePage.getContent();
 
     if (stores.isEmpty()) {
-      return PageableResponse.from(storePage.map(storeMapper::toResponse)); // 그대로 빈 페이지 반환
+      Page<StoreListItemResponse> empty =
+          storePage.map(s -> storeMapper.toListItem(s, List.of(), List.of())); // 메뉴 빈 리스트
+      return PageableResponse.from(empty);
     }
 
     // 현재 페이지의 가게 ID들 수집
@@ -153,14 +156,19 @@ public class StoreService {
                         storeHashtag -> hashtagMapper.toResponse(storeHashtag.getHashtag()),
                         Collectors.toList())));
 
-    // 각 가게 별로 해시태그 포함하여 DTO 변환
-    Page<StoreResponse> storeResponsePage =
+    // 메뉴 응답 리스트도 한 번에 로딩하여 (N+1 방지)
+    Map<Long, List<MenuResponse>> menusByStoreId = loadMenusByStoreIds(storeIds);
+
+    // StoreListItemResponse(store로 래핑)
+    Page<StoreListItemResponse> wrappedPage =
         storePage.map(
             store ->
-                storeMapper.toResponse(
-                    store, hashtagsByStoreId.getOrDefault(store.getId(), List.of())));
+                storeMapper.toListItem(
+                    store,
+                    hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
+                    menusByStoreId.getOrDefault(store.getId(), List.of())));
 
-    return PageableResponse.from(storeResponsePage);
+    return PageableResponse.from(wrappedPage);
   }
 
   /**
@@ -181,10 +189,16 @@ public class StoreService {
     Page<Store> storePage =
         storeRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
     List<Store> stores = storePage.getContent();
+    // 가게 ID 목록 추출
+    List<Long> storeIds = stores.stream().map(Store::getId).toList();
 
     // 현재 페이지 가게들의 해시태그를 한 번에 조회 (N+1 방지)
     Map<Long, List<HashtagResponse>> hashtagsByStoreId =
         stores.isEmpty() ? Map.of() : loadHashtagsByStoreIds(stores);
+
+    // 메뉴 한 번에 로딩
+    Map<Long, List<MenuResponse>> menusByStoreId =
+        stores.isEmpty() ? Map.of() : loadMenusByStoreIds(storeIds);
 
     /**
      * 검색된 가게를 StoreDistanceResponse 형태로 변환합니다.
@@ -201,7 +215,9 @@ public class StoreService {
             store -> {
               StoreResponse sr =
                   storeMapper.toResponse(
-                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+                      store,
+                      hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
+                      menusByStoreId.getOrDefault(store.getId(), List.of()));
 
               Double meters = null;
               if (lat != null
@@ -288,6 +304,12 @@ public class StoreService {
     Page<StoreRepository.StoreWithDistanceProjection> projPage =
         storeRepository.findNearby(lat, lng, radiusMeters, pageable);
 
+    // projection에서 가게 ID만 추출
+    List<Long> storeIds =
+        projPage.getContent().stream()
+            .map(StoreRepository.StoreWithDistanceProjection::getId)
+            .toList();
+
     // 현재 페이지 가게들의 해시태그를 한 번에 조회
     Map<Long, List<HashtagResponse>> hashtagsByStoreId =
         projPage.getContent().isEmpty()
@@ -296,6 +318,10 @@ public class StoreService {
                 projPage.getContent().stream()
                     .map(p -> Store.builder().id(p.getId()).build())
                     .toList());
+
+    // 메뉴 배치 로딩 추가
+    Map<Long, List<MenuResponse>> menusByStoreId =
+        projPage.getContent().isEmpty() ? Map.of() : loadMenusByStoreIds(storeIds);
 
     Page<StoreDistanceResponse> mapped =
         projPage.map(
@@ -313,12 +339,14 @@ public class StoreService {
                       .mainImageUrl(p.getMain_Image_Url())
                       .latitude(p.getLatitude())
                       .longitude(p.getLongitude())
-                      .authCode("") // 응답 비노출
+                      .authCode(p.getAuth_Code())
                       .build();
 
               StoreResponse storeRes =
                   storeMapper.toResponse(
-                      store, hashtagsByStoreId.getOrDefault(store.getId(), List.of()));
+                      store,
+                      hashtagsByStoreId.getOrDefault(store.getId(), List.of()),
+                      menusByStoreId.getOrDefault(store.getId(), List.of()));
 
               double meters = p.getDistance_m();
               return StoreDistanceResponse.builder()
@@ -399,5 +427,18 @@ public class StoreService {
     }
 
     storeRepository.delete(store);
+  }
+
+  /** 여러 가게(storeIds)에 속한 메뉴를 한 번에 조회하여 가게 ID -> 메뉴 리스트(Map) 형태로 변환합니다. */
+  private Map<Long, List<MenuResponse>> loadMenusByStoreIds(List<Long> storeIds) {
+    if (storeIds == null || storeIds.isEmpty()) {
+      return Map.of();
+    }
+
+    return menuRepository.findByStore_IdInOrderByIdAsc(storeIds).stream()
+        .collect(
+            Collectors.groupingBy(
+                m -> m.getStore().getId(),
+                Collectors.mapping(menuMapper::toResponse, Collectors.toList())));
   }
 }

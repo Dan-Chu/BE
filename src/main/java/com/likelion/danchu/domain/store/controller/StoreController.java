@@ -23,6 +23,7 @@ import com.likelion.danchu.domain.hashtag.dto.response.HashtagResponse;
 import com.likelion.danchu.domain.store.dto.request.StoreRequest;
 import com.likelion.danchu.domain.store.dto.response.PageableResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreDistanceResponse;
+import com.likelion.danchu.domain.store.dto.response.StoreListItemResponse;
 import com.likelion.danchu.domain.store.dto.response.StoreResponse;
 import com.likelion.danchu.domain.store.exception.StoreErrorCode;
 import com.likelion.danchu.domain.store.service.StoreHashtagService;
@@ -56,7 +57,7 @@ public class StoreController {
               - 가게 이름: **1자 이상, 10자 이내**
               - 주소: **1자 이상, 50자 이내**
               - 가게 소개: **1자 이상, 200자 이내**
-              - 전화번호: **010-1234-5678** 또는 **02-345-6789** 형식
+              - 전화번호: **010-1234-5678** / **02-345-6789** / **0507-1418-3557** 형식
               - 오픈/마감 시간: **HH:mm** 형식 (예: 09:00, 21:00)
               - 인증 코드: **숫자 4자리 (예: 0123)**
               - 이미지 파일: **multipart/form-data** 형식
@@ -98,10 +99,11 @@ public class StoreController {
               - size : 페이지 당 보여줄 가게 수입니다. (기본값: 3)
               """)
   @GetMapping
-  public ResponseEntity<BaseResponse<PageableResponse<StoreResponse>>> getPaginatedStores(
+  public ResponseEntity<BaseResponse<PageableResponse<StoreListItemResponse>>> getPaginatedStores(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
 
-    PageableResponse<StoreResponse> storeResponses = storeService.getPaginatedStores(page, size);
+    PageableResponse<StoreListItemResponse> storeResponses =
+        storeService.getPaginatedStores(page, size);
     return ResponseEntity.ok(BaseResponse.success("가게 페이징 조회에 성공했습니다.", storeResponses));
   }
 

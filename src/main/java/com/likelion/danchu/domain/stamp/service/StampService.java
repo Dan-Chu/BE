@@ -146,8 +146,7 @@ public class StampService {
       Long storeId = stamp.getStore().getId();
       CouponResponse coupon = couponService.createCouponFromStore(storeId, user.getId());
 
-      // 5) 스탬프카드 다음 라운드로 (count++ & IN_PROGRESS)
-      stamp.incrementCount(); // 10 -> 11
+      // 5) 스탬프카드 다음 라운드로
       stamp.updateStatus(StampStatus.IN_PROGRESS);
       stampRepository.save(stamp);
 

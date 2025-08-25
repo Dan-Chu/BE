@@ -5,9 +5,23 @@
 <img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/ca2ea692-3948-4f20-b7aa-7a81712c2125" />
 <img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/d7f41a74-7caf-4b97-a094-f9e6641f8375" />
 <img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/1fbb892c-4b12-4787-ae31-166d83c0c07a" />
-<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/630f00a9-5872-47f9-86d8-f43e950c8984" />
+<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/630f00a9-5872-47f9-86d8-f43e950c8984" />   
+<bt>
 
+### Description
+>서경대학교 앞 지역 상권은 학교 학생들의 주요 소비처임에도 불구하고 현재 활성화 되어있지 않아 학교 근처 번화가인 성신으로 유출되고 있는 상태입니다.  
+그 과정에서 학교 학생들을 수소문 해 본 결과, 소수의 학교 앞 상권은 입소문과 단골 중심으로 운영되고 있음을 알았습니다.   
+저희는 그 이후 “단골”을 키워드로 잡고 실행한 설문조사에서 “쿠폰을 챙기는 게 번거롭다” 등의 불편함을 확인했으며,   
+특히 학생·청년층은 온라인 위주의 생활방식 속에서 지역 상권에 대한 접근성이 낮아지고, 상인들은 온라인 홍보나 고객 관리에 어려움을 겪어 지역 경제와 생활이 단절되는 문제가 드러났습니다.
 
+> 단추는 “단추와 실”처럼 가게와 소비자를 연결하는 플랫폼으로,   
+지역 상권과 주민을 다시 이어주는 역할을 함과 동시에, 사용자의 소비 경험을 미션과 스탬프라는 방식으로 기록하고 추억할 수 있게 합니다.
+또한, 단골 경험을 AI 기반 추천, 미션, 디지털 적립 서비스로 확장해 지역 경제를 활성화하고, 상인과 소비자 모두가 지속적인 관계를 맺을 수 있도록 설계되었습니다.
+
+> 현재는 성북구를 주요 타깃 지역으로 설정하고 있으나, 향후 타 지역으로 확장할 예정입니다.
+더 나아가 서울 페이나 지역 화폐와의 연계를 통해 결제 수단을 다양화하고, 지역 기반 소비를 촉진함으로써 지역 경제 활성화에 기여하고자 합니다.
+
+<br>
 
 ### 🔗 Link
 https://www.danchu.site
@@ -157,8 +171,38 @@ src/main/java/com/likelion/danchu
 #### 배포
   - develop → main 병합 후 운영 배포
   - main 브랜치는 항상 운영 가능한 상태 유지
-
 ```
 	이슈 생성 → 브랜치 생성 → PR 생성 → 코드 리뷰 & Approve → Merge 순서
  	⭐️ PR 및 Merge 과정을 통해 협업 효율성, 코드 품질, 이력 관리의 명확성을 확보
 ```
+
+## 🚀 How to Run
+본 프로젝트는 **GitHub Actions 기반 CI/CD**가 구축되어 있으며, 메인 브랜치에 코드가 머지되면 자동으로 빌드 및 배포됩니다.
+
+
+#### *****배포 환경*****
+- **Server**: https://api.danchu.site  
+- **Swagger 문서**: https://api.danchu.site/swagger-ui/index.html
+> Swagger 문서는 보안을 위해 Nginx Basic Auth가 적용되어 있습니다.  
+> 필요 시, 별도로 제공되는 Swagger 계정 정보를 사용하여 접속해 주세요.   
+
+<br>
+
+#### *****로컬 실행 (대체)*****
+
+배포 환경 접근이 어려운 경우, 아래 명령어로 로컬에서 실행할 수 있습니다.
+
+```
+# 프로젝트 빌드 및 실행
+./gradlew bootRun
+```
+
+## 참고 사항
+> ⚠️ 본 서비스의 주요 기능(가게/미션 추천, 스탬프 적립 및 쿠폰 관리, 마이페이지 등)은  
+사용자별 데이터를 기반으로 제공되므로 **로그인이 반드시 필요합니다.**   
+
+- 회원가입, 로그인, Access Token 재발급 API를 제외한 모든 요청은 발급받은 Access Token을 `Request Header`에 포함해야 합니다.  
+- 테스트 계정 로그인을 원할 경우, 아래 엔드포인트를 이용하세요.  
+
+```http
+POST /api/auth/login/test

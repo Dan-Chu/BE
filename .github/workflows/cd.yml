@@ -77,7 +77,7 @@ jobs:
             export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
             export DOCKER_REPO="${{ secrets.DOCKER_REPO }}"
             export IMAGE_TAG="${{ github.sha }}"
-            export SPRING_PROFILES_ACTIVE=prod
+            export SPRING_PROFILES_ACTIVE=dev
             export SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}"
             export SPRING_DATASOURCE_USERNAME="${{ secrets.SPRING_DATASOURCE_USERNAME }}"
             export SPRING_DATASOURCE_PASSWORD="${{ secrets.SPRING_DATASOURCE_PASSWORD }}"

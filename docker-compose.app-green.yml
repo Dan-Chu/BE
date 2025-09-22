@@ -12,11 +12,8 @@ services:
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     command: ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-jar","app.jar"]
-    depends_on:
-      mysql: { condition: service_healthy }
-      redis: { condition: service_healthy }
     healthcheck:
-      test: ["CMD","wget","-qO-","http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

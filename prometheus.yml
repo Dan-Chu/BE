@@ -16,10 +16,15 @@ scrape_configs:
   - job_name: 'danchu'
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ['app:8080']
+      - targets: ['danchu-blue:8080']
         labels:
           application: danchu
-          service: app
+          service: app-blue
+          component: spring-boot
+      - targets: ['danchu-green:8080']
+        labels:
+          application: danchu
+          service: app-green
           component: spring-boot
 
   # node-exporter

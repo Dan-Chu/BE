@@ -21,6 +21,14 @@ logs/
 .git/
 .gitignore
 README.md
-docker-compose.yml
+docker-compose*.yml
 Dockerfile
 .dockerignore
+.github/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+src/test/

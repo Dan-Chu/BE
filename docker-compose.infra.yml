@@ -45,7 +45,6 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 공유
       - /home/ubuntu/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
-      - app
       - dozzle
       - grafana
       - prometheus

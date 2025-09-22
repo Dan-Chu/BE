@@ -120,6 +120,7 @@ services:
 
 networks:
   danchu-network:
+    name: danchu-network
     driver: bridge  # Docker 기본 브리지 네트워크를 사용
 
 volumes:

@@ -41,6 +41,7 @@ services:
       - "443:443"
     volumes:
       - /home/ubuntu/nginx/conf.d:/etc/nginx/conf.d
+      - /home/ubuntu/nginx/upstreams:/etc/nginx/upstreams:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 공유
       - /home/ubuntu/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
